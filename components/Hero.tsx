@@ -23,7 +23,7 @@ export default function Hero() {
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
           <a
-            href="#"
+            href="/auth/sign-in"
             className="rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             Start Creating Free

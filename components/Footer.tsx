@@ -1,3 +1,7 @@
+'use client'
+
+import Link from 'next/link'
+
 const footerLinks = {
   Product: [
     { label: 'Features', href: '#features' },
@@ -30,9 +34,9 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <a href="/" className="text-xl font-bold tracking-tight text-primary">
+            <Link href="/" className="text-xl font-bold tracking-tight text-primary">
               InfluencerAI
-            </a>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               AI-powered content generation and auto-scheduling platform for modern social media creators.
             </p>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useAuth } from '@/context/AuthContext'
 
 const navLinks = [
   { href: '#features', label: 'Features' },
@@ -10,13 +12,14 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { user, isLoading, signOut } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href="/" className="text-xl font-bold tracking-tight text-primary">
+        <Link href="/" className="text-xl font-bold tracking-tight text-primary">
           InfluencerAI
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-8 sm:flex">
           {navLinks.map((link) => (
@@ -28,12 +31,23 @@ export default function Header() {
               {link.label}
             </a>
           ))}
-          <a
-            href="#"
-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Get Started
-          </a>
+          {isLoading ? (
+            <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
+          ) : user ? (
+            <button
+              onClick={() => signOut()}
+              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              href="/auth/sign-in"
+              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Get Started
+            </Link>
+          )}
         </nav>
 
         <button
@@ -59,13 +73,27 @@ export default function Header() {
               {link.label}
             </a>
           ))}
-          <a
-            href="#"
-            onClick={() => setMobileOpen(false)}
-            className="rounded-full bg-primary px-5 py-2 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Get Started
-          </a>
+          {isLoading ? (
+            <div className="h-10 w-full animate-pulse rounded-full bg-muted" />
+          ) : user ? (
+            <button
+              onClick={() => {
+                signOut()
+                setMobileOpen(false)
+              }}
+              className="rounded-full bg-primary px-5 py-2 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              href="/auth/sign-in"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-full bg-primary px-5 py-2 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Get Started
+            </Link>
+          )}
         </nav>
       )}
     </header>
