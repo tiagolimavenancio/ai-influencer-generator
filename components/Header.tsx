@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
+import { Loader2 } from 'lucide-react'
 
 const navLinks = [
   { href: '#features', label: 'Features' },
@@ -12,7 +13,7 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { user, isLoading, signOut } = useAuth()
+  const { user, isLoading } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm">
@@ -32,14 +33,14 @@ export default function Header() {
             </a>
           ))}
           {isLoading ? (
-            <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : user ? (
-            <button
-              onClick={() => signOut()}
+            <Link
+              href="/dashboard"
               className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Sign Out
-            </button>
+              Dashboard
+            </Link>
           ) : (
             <Link
               href="/auth/sign-in"
@@ -74,17 +75,15 @@ export default function Header() {
             </a>
           ))}
           {isLoading ? (
-            <div className="h-10 w-full animate-pulse rounded-full bg-muted" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : user ? (
-            <button
-              onClick={() => {
-                signOut()
-                setMobileOpen(false)
-              }}
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileOpen(false)}
               className="rounded-full bg-primary px-5 py-2 text-center text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Sign Out
-            </button>
+              Dashboard
+            </Link>
           ) : (
             <Link
               href="/auth/sign-in"
