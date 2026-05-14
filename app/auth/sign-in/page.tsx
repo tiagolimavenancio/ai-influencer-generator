@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
@@ -17,7 +17,10 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return createClient()
+  }, [])
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -27,6 +30,8 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) return
+    
     setError(null)
     setMessage(null)
     setLoading(true)
@@ -77,6 +82,8 @@ export default function SignInPage() {
   }
 
   const handleOAuthSignIn = async (provider: 'google' | 'github') => {
+    if (!supabase) return
+    
     setError(null)
     setLoading(true)
 
@@ -93,7 +100,7 @@ export default function SignInPage() {
     }
   }
 
-  if (authLoading) {
+  if (authLoading || !supabase) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

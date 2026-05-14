@@ -1,0 +1,235 @@
+import { createClient } from '@supabase/supabase-js';
+import { Model, Post, Profile, CreditTransaction, ModelFormData } from '@/types/database';
+
+export type { Model, Post, Profile, CreditTransaction, ModelFormData };
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Profile operations
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function updateCredits(userId: string, credits: number): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ credits, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating credits:', error);
+    return null;
+  }
+  return data;
+}
+
+// Model operations
+export async function getModels(userId: string): Promise<Model[]> {
+  const { data, error } = await supabase
+    .from('models')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching models:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getModel(modelId: string): Promise<Model | null> {
+  const { data, error } = await supabase
+    .from('models')
+    .select('*')
+    .eq('id', modelId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching model:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function createModel(userId: string, formData: ModelFormData, portraitUrl: string, fullBodyUrl: string, prompt: string): Promise<Model | null> {
+  const { data, error } = await supabase
+    .from('models')
+    .insert({
+      user_id: userId,
+      name: formData.name,
+      gender: formData.gender,
+      body_type: formData.bodyType,
+      skin_tone: formData.skinTone,
+      age_range: formData.ageRange,
+      hair_style: formData.hairStyle,
+      hair_color: formData.hairColor,
+      eye_color: formData.eyeColor,
+      vibe: formData.vibe,
+      portrait_url: portraitUrl,
+      full_body_url: fullBodyUrl,
+      prompt,
+      credits_spent: 50,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating model:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function deleteModel(modelId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('models')
+    .delete()
+    .eq('id', modelId);
+
+  if (error) {
+    console.error('Error deleting model:', error);
+    return false;
+  }
+  return true;
+}
+
+// Post operations
+export async function getPosts(userId: string): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching posts:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getPost(postId: string): Promise<Post | null> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', postId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching post:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function createPost(userId: string, modelId: string | null, content: string, imageUrl: string | null, platform: string, scheduledAt?: string): Promise<Post | null> {
+  const { data, error } = await supabase
+    .from('posts')
+    .insert({
+      user_id: userId,
+      model_id: modelId,
+      content,
+      image_url: imageUrl,
+      platform,
+      status: scheduledAt ? 'scheduled' : 'draft',
+      scheduled_at: scheduledAt || null,
+      credits_spent: 10,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating post:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function updatePost(postId: string, updates: Partial<Post>): Promise<Post | null> {
+  const { data, error } = await supabase
+    .from('posts')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', postId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating post:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function deletePost(postId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId);
+
+  if (error) {
+    console.error('Error deleting post:', error);
+    return false;
+  }
+  return true;
+}
+
+// Credit transaction operations
+export async function getCreditTransactions(userId: string): Promise<CreditTransaction[]> {
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('Error fetching transactions:', error);
+    return [];
+  }
+  return data || [];
+}
+
+// Helper function to deduct credits via database function
+export async function deductCredits(userId: string, amount: number): Promise<boolean> {
+  const { data, error } = await supabase.rpc('deduct_credits', {
+    user_uuid: userId,
+    amount,
+  });
+
+  if (error) {
+    console.error('Error deducting credits:', error);
+    return false;
+  }
+  return data !== null;
+}
+
+// Helper function to add credits via database function
+export async function addCredits(userId: string, amount: number, description?: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('add_credits', {
+    user_uuid: userId,
+    amount,
+    description: description || 'Credit purchase',
+  });
+
+  if (error) {
+    console.error('Error adding credits:', error);
+    return false;
+  }
+  return data !== null;
+}
