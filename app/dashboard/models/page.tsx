@@ -113,7 +113,7 @@ export default function ModelsPage() {
 					</div>
 				</Link>
 
-				<Link href="#" className="rounded-lg border border-border bg-card p-6">
+				<Link href="/dashboard/post-generator" className="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted">
 					<div className="flex items-center gap-4">
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
 							<FileText className="h-6 w-6 text-primary" />
@@ -124,9 +124,10 @@ export default function ModelsPage() {
 								Generate high-quality social media posts
 							</p>
 						</div>
-						<span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-							Coming Soon
-						</span>
+						<div className="flex items-center gap-1 text-sm font-medium text-primary">
+							<span>Get Started</span>
+							<ArrowRight className="h-4 w-4" />
+						</div>
 					</div>
 				</Link>
 			</div>

@@ -346,7 +346,7 @@ export default function CreateModelPage() {
 				throw new Error(portraitData.error || fullBodyData.error);
 			}
 
-setGeneratedImages({
+			setGeneratedImages({
 				portrait: portraitData.imageUrl,
 				fullBody: fullBodyData.imageUrl,
 				isMock: portraitData._mock || fullBodyData._mock || false,
@@ -393,8 +393,12 @@ setGeneratedImages({
 		}
 
 		const prompt = generatePrompt();
-		console.log("Creating model with data:", { portraitUrl, fullBodyUrl, prompt });
-		
+		console.log("Creating model with data:", {
+			portraitUrl,
+			fullBodyUrl,
+			prompt,
+		});
+
 		const model = await createModel(
 			user.id,
 			formData,
@@ -590,7 +594,9 @@ setGeneratedImages({
 						>
 							<div className="flex items-center justify-center gap-3">
 								<Zap className="h-5 w-5" />
-								<span className="text-base font-bold">Quick Mock (Test Mode)</span>
+								<span className="text-base font-bold">
+									Quick Mock (Test Mode)
+								</span>
 								<div className="rounded-lg bg-primary/20 px-2 py-1 text-xs font-bold">
 									-50 ⚡
 								</div>
