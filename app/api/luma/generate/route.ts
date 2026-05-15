@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function getMockImageUrl(type: "portrait" | "full-body"): string {
+	const seed = Math.floor(Math.random() * 1000);
+	const width = type === "portrait" ? 400 : 800;
+	const height = type === "portrait" ? 500 : 1200;
+	return `https://picsum.photos/seed/${seed}/${width}/${height}`;
+}
+
 export async function POST(request: NextRequest) {
 	try {
 		const { prompt } = await request.json();
@@ -9,6 +16,17 @@ export async function POST(request: NextRequest) {
 				{ error: "Prompt is required" },
 				{ status: 400 },
 			);
+		}
+
+		if (process.env.LUMA_MOCK === "true" || process.env.NEXT_PUBLIC_LUMA_MOCK === "true") {
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+			const type = prompt.toLowerCase().includes("portrait") || prompt.toLowerCase().includes("headshot")
+				? "portrait"
+				: "full-body";
+			return NextResponse.json({
+				imageUrl: getMockImageUrl(type),
+				_mock: true,
+			});
 		}
 
 		const apiKey = process.env.NEXT_PUBLIC_LUMA_AGENTS_API_KEY;

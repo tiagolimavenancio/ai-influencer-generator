@@ -192,10 +192,12 @@ export default function CreateModelPage() {
 	const [generatedImages, setGeneratedImages] = useState<{
 		portrait: string;
 		fullBody: string;
+		isMock: boolean;
 	} | null>(null);
 	const [autoPrompt, setAutoPrompt] = useState<string>("");
 	const [credits, setCredits] = useState(300);
 	const [isLoadingCredits, setIsLoadingCredits] = useState(true);
+	const isTestMode = process.env.NEXT_PUBLIC_LUMA_MOCK === "true";
 
 	useEffect(() => {
 		if (!authLoading && !user) {
@@ -248,6 +250,39 @@ export default function CreateModelPage() {
 		const selectedVibe = vibeOptions.find((v) => v.id === formData.vibe);
 
 		return `AI generated ${selectedGender?.label || ""} influencer, ${formData.name || "Model Name"}, ${selectedBodyType?.label || ""} ${selectedSkinTone?.label || ""} skin tone, ${selectedAgeRange?.label || ""} years old, ${selectedHairStyle?.label || ""} ${selectedHairColor?.label || ""} hair, ${selectedEyeColor?.label || ""} eyes, ${selectedVibe?.label || ""} vibe and aesthetic, high quality, professional photography, studio lighting, detailed facial features, sharp focus, 8k quality`;
+	};
+
+	const handleQuickMock = async () => {
+		if (!user) return;
+
+		if (credits < 50) {
+			alert("Insufficient credits! Please purchase more credits.");
+			return;
+		}
+
+		if (
+			!formData.name ||
+			!formData.gender ||
+			!formData.bodyType ||
+			!formData.skinTone ||
+			!formData.ageRange ||
+			!formData.hairStyle ||
+			!formData.hairColor ||
+			!formData.eyeColor ||
+			!formData.vibe
+		) {
+			alert("Please fill in all options before generating.");
+			return;
+		}
+
+		const seed = Math.floor(Math.random() * 1000);
+		setGeneratedImages({
+			portrait: `https://picsum.photos/seed/${seed}/400/500`,
+			fullBody: `https://picsum.photos/seed/${seed + 1}/800/1200`,
+			isMock: true,
+		});
+		setSaveSuccess(false);
+		setCredits((prev) => prev - 50);
 	};
 
 	const handleGenerate = async () => {
@@ -311,9 +346,10 @@ export default function CreateModelPage() {
 				throw new Error(portraitData.error || fullBodyData.error);
 			}
 
-			setGeneratedImages({
+setGeneratedImages({
 				portrait: portraitData.imageUrl,
 				fullBody: fullBodyData.imageUrl,
+				isMock: portraitData._mock || fullBodyData._mock || false,
 			});
 			setSaveSuccess(false);
 			setCredits((prev) => prev - 50);
@@ -331,23 +367,39 @@ export default function CreateModelPage() {
 
 		setIsSaving(true);
 
-		const [portraitStorageUrl, fullBodyStorageUrl] = await Promise.all([
-			uploadModelImage(user.id, generatedImages.portrait, "portrait"),
-			uploadModelImage(user.id, generatedImages.fullBody, "full-body"),
-		]);
+		console.log("Saving model with user:", user.id);
+		console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
 
-		if (!portraitStorageUrl || !fullBodyStorageUrl) {
-			setIsSaving(false);
-			alert("Failed to upload images. Please try again.");
-			return;
+		let portraitUrl: string;
+		let fullBodyUrl: string;
+
+		if (generatedImages.isMock) {
+			console.log("Using mock images - skipping storage upload");
+			portraitUrl = generatedImages.portrait;
+			fullBodyUrl = generatedImages.fullBody;
+		} else {
+			const [portraitStorageUrl, fullBodyStorageUrl] = await Promise.all([
+				uploadModelImage(user.id, generatedImages.portrait, "portrait"),
+				uploadModelImage(user.id, generatedImages.fullBody, "full-body"),
+			]);
+
+			if (!portraitStorageUrl || !fullBodyStorageUrl) {
+				setIsSaving(false);
+				alert("Failed to upload images. Please try again.");
+				return;
+			}
+			portraitUrl = portraitStorageUrl;
+			fullBodyUrl = fullBodyStorageUrl;
 		}
 
 		const prompt = generatePrompt();
+		console.log("Creating model with data:", { portraitUrl, fullBodyUrl, prompt });
+		
 		const model = await createModel(
 			user.id,
 			formData,
-			portraitStorageUrl,
-			fullBodyStorageUrl,
+			portraitUrl,
+			fullBodyUrl,
 			prompt,
 		);
 
@@ -355,7 +407,7 @@ export default function CreateModelPage() {
 			setSaveSuccess(true);
 			router.push("/dashboard/models");
 		} else {
-			alert("Failed to save model. Please try again.");
+			alert("Failed to save model. Please check console for details.");
 		}
 		setIsSaving(false);
 	};
@@ -527,6 +579,24 @@ export default function CreateModelPage() {
 							)}
 						</div>
 					</button>
+
+					{isTestMode && (
+						<button
+							onClick={handleQuickMock}
+							disabled={isGenerating}
+							className={`w-full rounded-lg border-2 border-dashed border-primary bg-primary/10 px-6 py-4 text-primary shadow-sm transition-all hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50 ${
+								isGenerating ? "cursor-wait" : ""
+							}`}
+						>
+							<div className="flex items-center justify-center gap-3">
+								<Zap className="h-5 w-5" />
+								<span className="text-base font-bold">Quick Mock (Test Mode)</span>
+								<div className="rounded-lg bg-primary/20 px-2 py-1 text-xs font-bold">
+									-50 ⚡
+								</div>
+							</div>
+						</button>
+					)}
 				</div>
 
 				<div className="w-full space-y-6 lg:w-[400px]">

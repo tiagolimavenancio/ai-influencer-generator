@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import {
 	Model,
 	Post,
@@ -9,10 +9,16 @@ import {
 
 export type { Model, Post, Profile, CreditTransaction, ModelFormData };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+	console.error("Missing Supabase configuration:", { supabaseUrl, supabaseAnonKey });
+}
+
+export const supabase = supabaseUrl && supabaseAnonKey
+	? createBrowserClient(supabaseUrl, supabaseAnonKey)
+	: (null as any);
 
 // Profile operations
 export async function getProfile(userId: string): Promise<Profile | null> {
@@ -105,7 +111,7 @@ export async function createModel(
 		.single();
 
 	if (error) {
-		console.error("Error creating model:", error);
+		console.error("Error creating model:", error.message, error.details, error.hint);
 		return null;
 	}
 	return data;

@@ -13,7 +13,14 @@ import {
 	Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getModels, getPosts, getProfile, deleteModel, Model, Post } from "@/lib/db";
+import {
+	getModels,
+	getPosts,
+	getProfile,
+	deleteModel,
+	Model,
+	Post,
+} from "@/lib/db";
 
 export default function ModelsPage() {
 	const { user, isLoading: authLoading } = useAuth();
@@ -106,10 +113,7 @@ export default function ModelsPage() {
 					</div>
 				</Link>
 
-				<Link
-					href="#"
-					className="rounded-lg border border-border bg-card p-6"
-				>
+				<Link href="#" className="rounded-lg border border-border bg-card p-6">
 					<div className="flex items-center gap-4">
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
 							<FileText className="h-6 w-6 text-primary" />
@@ -129,23 +133,30 @@ export default function ModelsPage() {
 
 			<div className="mt-12 grid gap-12 lg:grid-cols-2">
 				<div>
-					<h2 className="mb-6 text-2xl font-semibold">Your Models</h2>
+					<h2 className="mb-6 text-2xl font-semibold">My Models</h2>
 					{models.length === 0 ? (
 						<div className="rounded-lg border border-border bg-card p-12 text-center">
 							<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
 								<ImageIcon className="h-8 w-8 text-muted-foreground" />
 							</div>
-							<h3 className="text-lg font-semibold">No models yet</h3>
+							<h3 className="text-lg font-semibold">No models created yet</h3>
 							<p className="mt-2 text-sm text-muted-foreground">
-								Create your first AI influencer model to get started
+								Start by creating your first AI influencer model
 							</p>
+							<Link
+								href="/dashboard/models/create"
+								className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+							>
+								<Plus className="h-4 w-4" />
+								Create First Model
+							</Link>
 						</div>
 					) : (
 						<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 							{models.map((model) => (
 								<div
 									key={model.id}
-									className="rounded-lg border border-border bg-card"
+									className="group relative rounded-lg border border-border bg-card"
 								>
 									<div className="relative aspect-square">
 										{model.portrait_url ? (
@@ -178,6 +189,18 @@ export default function ModelsPage() {
 									</div>
 								</div>
 							))}
+							<Link
+								href="/dashboard/models/create"
+								className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-8 text-center transition-colors hover:border-primary/50 hover:bg-muted/50"
+							>
+								<div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+									<Plus className="h-6 w-6 text-primary" />
+								</div>
+								<p className="font-semibold">Create New Model</p>
+								<p className="mt-1 text-xs text-muted-foreground">
+									Design a new AI influencer
+								</p>
+							</Link>
 						</div>
 					)}
 				</div>
