@@ -19,7 +19,13 @@ import {
 	Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getProfile, createModel, deductCredits, addCredits } from "@/lib/db";
+import {
+	getProfile,
+	createModel,
+	deductCredits,
+	addCredits,
+	uploadModelImage,
+} from "@/lib/db";
 
 interface Option {
 	id: string;
@@ -182,10 +188,12 @@ export default function CreateModelPage() {
 	});
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [saveSuccess, setSaveSuccess] = useState(false);
 	const [generatedImages, setGeneratedImages] = useState<{
 		portrait: string;
 		fullBody: string;
 	} | null>(null);
+	const [autoPrompt, setAutoPrompt] = useState<string>("");
 	const [credits, setCredits] = useState(300);
 	const [isLoadingCredits, setIsLoadingCredits] = useState(true);
 
@@ -210,6 +218,11 @@ export default function CreateModelPage() {
 
 	const updateFormData = (field: keyof FormData, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
+		setAutoPrompt("");
+	};
+
+	const resetToAuto = () => {
+		setAutoPrompt("");
 	};
 
 	const generatePrompt = () => {
@@ -269,7 +282,8 @@ export default function CreateModelPage() {
 			return;
 		}
 
-		const prompt = generatePrompt();
+		const basePrompt = generatePrompt();
+		const prompt = autoPrompt.trim() || basePrompt;
 
 		try {
 			const portraitPrompt = `${prompt}, portrait, close-up face shot, professional headshot`;
@@ -301,6 +315,7 @@ export default function CreateModelPage() {
 				portrait: portraitData.imageUrl,
 				fullBody: fullBodyData.imageUrl,
 			});
+			setSaveSuccess(false);
 			setCredits((prev) => prev - 50);
 		} catch (error) {
 			console.error("Generation error:", error);
@@ -315,16 +330,29 @@ export default function CreateModelPage() {
 		if (!user || !generatedImages) return;
 
 		setIsSaving(true);
+
+		const [portraitStorageUrl, fullBodyStorageUrl] = await Promise.all([
+			uploadModelImage(user.id, generatedImages.portrait, "portrait"),
+			uploadModelImage(user.id, generatedImages.fullBody, "full-body"),
+		]);
+
+		if (!portraitStorageUrl || !fullBodyStorageUrl) {
+			setIsSaving(false);
+			alert("Failed to upload images. Please try again.");
+			return;
+		}
+
 		const prompt = generatePrompt();
 		const model = await createModel(
 			user.id,
 			formData,
-			generatedImages.portrait,
-			generatedImages.fullBody,
+			portraitStorageUrl,
+			fullBodyStorageUrl,
 			prompt,
 		);
 
 		if (model) {
+			setSaveSuccess(true);
 			router.push("/dashboard/models");
 		} else {
 			alert("Failed to save model. Please try again.");
@@ -446,6 +474,59 @@ export default function CreateModelPage() {
 							icon={Heart}
 						/>
 					</div>
+
+					<div className="rounded-lg border border-border bg-card p-6">
+						<div className="mb-4 flex items-center gap-2">
+							<Sparkles className="h-5 w-5 text-primary" />
+							<h3 className="text-lg font-semibold">Prompt Preview</h3>
+							{autoPrompt && (
+								<button
+									onClick={resetToAuto}
+									className="ml-auto flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/80"
+								>
+									<RefreshCw className="h-3 w-3" />
+									Reset to Auto
+								</button>
+							)}
+						</div>
+						<textarea
+							value={autoPrompt || generatePrompt()}
+							onChange={(e) => setAutoPrompt(e.target.value)}
+							placeholder="Auto-generated prompt..."
+							rows={4}
+							className="w-full resize-none rounded-lg border border-border bg-muted p-4 font-mono text-xs leading-relaxed placeholder:text-muted-foreground transition-all focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+						/>
+						{autoPrompt && (
+							<p className="mt-2 text-xs text-muted-foreground">
+								Custom prompt active. Click "Reset to Auto" to restore.
+							</p>
+						)}
+					</div>
+
+					<button
+						onClick={handleGenerate}
+						disabled={isGenerating}
+						className={`w-full rounded-lg bg-primary px-6 py-5 text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 ${
+							isGenerating ? "cursor-wait" : ""
+						}`}
+					>
+						<div className="flex items-center justify-center gap-3">
+							{isGenerating ? (
+								<>
+									<RefreshCw className="h-6 w-6 animate-spin" />
+									<span className="text-lg font-bold">Generating...</span>
+								</>
+							) : (
+								<>
+									<Sparkles className="h-6 w-6" />
+									<span className="text-lg font-bold">Generate Influencer</span>
+									<div className="rounded-lg bg-white/20 px-2 py-1 text-xs font-bold">
+										-50 ⚡
+									</div>
+								</>
+							)}
+						</div>
+					</button>
 				</div>
 
 				<div className="w-full space-y-6 lg:w-[400px]">
@@ -459,45 +540,6 @@ export default function CreateModelPage() {
 								Configure your options and click generate to see results
 							</p>
 						</div>
-
-						<div className="rounded-lg border border-border bg-card p-6">
-							<div className="mb-4 flex items-center gap-2">
-								<Sparkles className="h-5 w-5 text-primary" />
-								<h3 className="text-lg font-semibold">Prompt Preview</h3>
-							</div>
-							<div className="rounded-lg bg-muted p-4">
-								<p className="font-mono text-xs leading-relaxed">
-									{generatePrompt()}
-								</p>
-							</div>
-						</div>
-
-						<button
-							onClick={handleGenerate}
-							disabled={isGenerating}
-							className={`w-full rounded-lg bg-primary px-6 py-5 text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 ${
-								isGenerating ? "cursor-wait" : ""
-							}`}
-						>
-							<div className="flex items-center justify-center gap-3">
-								{isGenerating ? (
-									<>
-										<RefreshCw className="h-6 w-6 animate-spin" />
-										<span className="text-lg font-bold">Generating...</span>
-									</>
-								) : (
-									<>
-										<Sparkles className="h-6 w-6" />
-										<span className="text-lg font-bold">
-											Generate Influencer
-										</span>
-										<div className="rounded-lg bg-white/20 px-2 py-1 text-xs font-bold">
-											-50 ⚡
-										</div>
-									</>
-								)}
-							</div>
-						</button>
 
 						{generatedImages && (
 							<div className="rounded-lg border border-border bg-card p-6">
@@ -531,21 +573,27 @@ export default function CreateModelPage() {
 										/>
 									</div>
 								</div>
-								<div className="mt-4 flex gap-3">
+								<div className="mt-4 space-y-3">
 									<button
 										onClick={handleSaveModel}
 										disabled={isSaving}
-										className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+										className={`w-full rounded-lg px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${
+											saveSuccess
+												? "bg-green-500 text-white hover:bg-green-600"
+												: "bg-primary text-primary-foreground hover:bg-primary/90"
+										}`}
 									>
-										{isSaving ? "Saving..." : "Save Model"}
+										{saveSuccess
+											? "✓ Saved Successfully"
+											: isSaving
+												? "Saving..."
+												: "Save AI Model to Studio"}
 									</button>
-									<button
-										onClick={handleGenerate}
-										disabled={isGenerating || credits < 50}
-										className="flex-1 rounded-lg border border-border bg-card px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
-									>
-										Regenerate
-									</button>
+									{saveSuccess && (
+										<p className="text-center text-xs text-muted-foreground">
+											Your model is now available in the Studio Gallery
+										</p>
+									)}
 								</div>
 							</div>
 						)}

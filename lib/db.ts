@@ -243,6 +243,48 @@ export async function deductCredits(
 	return data !== null;
 }
 
+// Upload model image to Supabase Storage and return the public URL
+export async function uploadModelImage(
+	userId: string,
+	imageUrl: string,
+	type: "portrait" | "full-body",
+): Promise<string | null> {
+	try {
+		const response = await fetch(imageUrl);
+		if (!response.ok) {
+			console.error("Failed to fetch image from URL:", imageUrl);
+			return null;
+		}
+		const blob = await response.blob();
+		const buffer = await blob.arrayBuffer();
+
+		const extension = imageUrl.split(".").pop()?.split("?")[0] || "png";
+		const timestamp = Date.now();
+		const fileName = `${userId}/${type}-${timestamp}.${extension}`;
+
+		const { data, error } = await supabase.storage
+			.from("influencers")
+			.upload(fileName, buffer, {
+				contentType: `image/${extension === "jpg" ? "jpeg" : extension}`,
+				upsert: false,
+			});
+
+		if (error) {
+			console.error("Storage upload error:", error);
+			return null;
+		}
+
+		const { data: publicUrlData } = supabase.storage
+			.from("influencers")
+			.getPublicUrl(data.path);
+
+		return publicUrlData.publicUrl;
+	} catch (err) {
+		console.error("uploadModelImage error:", err);
+		return null;
+	}
+}
+
 // Helper function to add credits via database function
 export async function addCredits(
 	userId: string,
