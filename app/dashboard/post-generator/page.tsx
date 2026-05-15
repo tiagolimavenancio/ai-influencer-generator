@@ -99,17 +99,19 @@ export default function PostGeneratorPage() {
     setIsGenerating(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
+    setGeneratedImage(
+      "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=600&fit=crop"
+    );
+
     const deducted = await deductCredits(user.id, 10);
     if (!deducted) {
+      setGeneratedImage(null);
       setIsGenerating(false);
       alert("Failed to deduct credits. Please try again.");
       return;
     }
 
     setCredits((prev) => prev - 10);
-    setGeneratedImage(
-      "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=600&fit=crop"
-    );
 
     setIsGenerating(false);
   };
