@@ -238,7 +238,7 @@ export default function ModelsPage() {
 										)}
 										<div className="min-w-0 flex-1">
 											<p className="text-sm line-clamp-2">
-												{post.content || "No content"}
+												{post.caption || "No content"}
 											</p>
 											<div className="mt-2 flex items-center gap-2">
 												<span

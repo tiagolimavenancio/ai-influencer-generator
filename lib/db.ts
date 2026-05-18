@@ -13,12 +13,16 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-	console.error("Missing Supabase configuration:", { supabaseUrl, supabaseAnonKey });
+	console.error("Missing Supabase configuration:", {
+		supabaseUrl,
+		supabaseAnonKey,
+	});
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey
-	? createBrowserClient(supabaseUrl, supabaseAnonKey)
-	: (null as any);
+export const supabase =
+	supabaseUrl && supabaseAnonKey
+		? createBrowserClient(supabaseUrl, supabaseAnonKey)
+		: (null as any);
 
 // Profile operations
 export async function getProfile(userId: string): Promise<Profile | null> {
@@ -111,7 +115,12 @@ export async function createModel(
 		.single();
 
 	if (error) {
-		console.error("Error creating model:", error.message, error.details, error.hint);
+		console.error(
+			"Error creating model:",
+			error.message,
+			error.details,
+			error.hint,
+		);
 		return null;
 	}
 	return data;
@@ -159,20 +168,23 @@ export async function getPost(postId: string): Promise<Post | null> {
 export async function createPost(
 	userId: string,
 	modelId: string | null,
-	content: string,
+	caption: string,
 	imageUrl: string | null,
 	platform: string,
 	scheduledAt?: string,
+	status?: string,
 ): Promise<Post | null> {
+	const postStatus = status || (scheduledAt ? "scheduled" : "draft");
+
 	const { data, error } = await supabase
 		.from("posts")
 		.insert({
 			user_id: userId,
 			model_id: modelId,
-			content,
+			caption,
 			image_url: imageUrl,
 			platform,
-			status: scheduledAt ? "scheduled" : "draft",
+			status: postStatus,
 			scheduled_at: scheduledAt || null,
 			credits_spent: 10,
 		})

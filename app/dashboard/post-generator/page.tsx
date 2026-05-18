@@ -37,9 +37,12 @@ import {
 	AudioLines,
 	TrendingUp,
 	DollarSign,
-	Users,
+	Calendar as CalendarIcon,
+	Clock,
+	CheckCircle,
 	BarChart3,
 } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 import {
 	getModels,
@@ -49,6 +52,21 @@ import {
 	addCredits,
 	Model,
 } from "@/lib/db";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const platformOptions = [
 	{
@@ -235,11 +253,16 @@ export default function PostGeneratorPage() {
 	const [credits, setCredits] = useState(300);
 	const [isLoadingCredits, setIsLoadingCredits] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
-	const [saveSuccess, setSaveSuccess] = useState(false);
 	const [isLoadingModels, setIsLoadingModels] = useState(true);
 	const [activeTab, setActiveTab] = useState<
 		"model" | "platform" | "format" | "content" | "visual" | "caption"
 	>("model");
+	const [showSaveOptions, setShowSaveOptions] = useState(false);
+	const [showScheduleModal, setShowScheduleModal] = useState(false);
+	const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+	const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
+	const [scheduleTime, setScheduleTime] = useState("");
+	const [publishNow, setPublishNow] = useState(true);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const isTestMode = process.env.NEXT_PUBLIC_LUMA_MOCK === "true";
@@ -373,7 +396,6 @@ export default function PostGeneratorPage() {
 			return;
 		}
 
-		setSaveSuccess(false);
 		setIsGenerating(true);
 
 		const deducted = await deductCredits(user.id, 10);
@@ -424,7 +446,7 @@ export default function PostGeneratorPage() {
 		setIsGenerating(false);
 	};
 
-	const handleSavePost = async () => {
+	const handleSaveAsDraft = async () => {
 		if (!user || !generatedImage) return;
 
 		setIsSaving(true);
@@ -434,19 +456,61 @@ export default function PostGeneratorPage() {
 			formData.caption,
 			generatedImage,
 			formData.platform,
-			formData.scheduledAt || undefined,
+			undefined,
+			"draft",
 		);
 
 		if (post) {
+			setShowSaveOptions(false);
+			setShowSuccessDialog(true);
+		} else {
+			alert("Failed to save draft. Please try again.");
+		}
+		setIsSaving(false);
+	};
+
+	const handleSchedulePost = async () => {
+		if (!user || !generatedImage) return;
+
+		const scheduledAt = publishNow
+			? new Date().toISOString()
+			: scheduleDate && scheduleTime
+				? `${format(scheduleDate, "yyyy-MM-dd")}T${scheduleTime}:00`
+				: null;
+
+		if (!publishNow && !scheduledAt) {
+			alert("Please select a date and time to schedule your post.");
+			return;
+		}
+
+		setIsSaving(true);
+		const post = await createPost(
+			user.id,
+			formData.modelId,
+			formData.caption,
+			generatedImage,
+			formData.platform,
+			scheduledAt || undefined,
+			"scheduled",
+		);
+
+		if (post) {
+			setShowScheduleModal(false);
+			setShowSaveOptions(false);
 			setGeneratedImage(null);
 			setFormData(defaultFormData);
-			setSaveSuccess(true);
-
+			setScheduleDate(undefined);
+			setScheduleTime("");
 			if (models.length > 0) {
 				setFormData((prev) => ({ ...prev, modelId: models[0].id }));
 			}
+			alert(
+				publishNow
+					? "Post published successfully!"
+					: "Post scheduled successfully!",
+			);
 		} else {
-			alert("Failed to save post. Please try again.");
+			alert("Failed to schedule post. Please try again.");
 		}
 		setIsSaving(false);
 	};
@@ -1168,42 +1232,52 @@ export default function PostGeneratorPage() {
 
 						{generatedImage && (
 							<div className="space-y-3">
-								<button
-									onClick={handleSavePost}
-									disabled={isSaving}
-									className={`w-full rounded-xl px-4 py-3 text-sm font-bold shadow-sm transition-all disabled:opacity-50 ${
-										saveSuccess
-											? "bg-green-500 text-white hover:bg-green-600"
-											: "bg-primary text-primary-foreground hover:bg-primary/90"
-									}`}
-								>
-									{saveSuccess
-										? "✓ Saved to Posts"
-										: isSaving
-											? "Saving..."
-											: "Save Post"}
-								</button>
-								{saveSuccess && (
-									<p className="text-center text-xs text-muted-foreground">
-										Your post is now available in the Posts Gallery
-									</p>
-								)}
-								{!saveSuccess && (
+								{!showSaveOptions ? (
 									<button
-										onClick={() => {
-											setGeneratedImage(null);
-											setFormData(defaultFormData);
-											if (models.length > 0) {
-												setFormData((prev) => ({
-													...prev,
-													modelId: models[0].id,
-												}));
-											}
-										}}
-										className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+										onClick={() => setShowSaveOptions(true)}
+										className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold shadow-sm transition-all hover:bg-primary/90"
 									>
-										Clear
+										Save or Schedule Post
 									</button>
+								) : (
+									<div className="space-y-3">
+										<div className="grid grid-cols-2 gap-3">
+											<button
+												onClick={handleSaveAsDraft}
+												disabled={isSaving}
+												className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card px-4 py-4 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-muted"
+											>
+												<Bookmark className="h-5 w-5" />
+												<span>Save as Draft</span>
+											</button>
+											<button
+												className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card px-4 py-4 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-muted"
+												onClick={() => {
+													setShowScheduleModal(true);
+												}}
+											>
+												<CalendarIcon className="h-5 w-5" />
+												<span>Schedule</span>
+											</button>
+										</div>
+
+										<button
+											onClick={() => {
+												setShowSaveOptions(false);
+												setGeneratedImage(null);
+												setFormData(defaultFormData);
+												if (models.length > 0) {
+													setFormData((prev) => ({
+														...prev,
+														modelId: models[0].id,
+													}));
+												}
+											}}
+											className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+										>
+											Clear
+										</button>
+									</div>
 								)}
 							</div>
 						)}
@@ -1273,6 +1347,196 @@ export default function PostGeneratorPage() {
 					</div>
 				</div>
 			</div>
+
+			{showScheduleModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+						<div className="mb-6 flex items-center justify-between">
+							<h3 className="text-xl font-bold">Schedule Post</h3>
+							<button
+								onClick={() => setShowScheduleModal(false)}
+								className="flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80"
+							>
+								<X className="h-4 w-4" />
+							</button>
+						</div>
+
+						<div className="space-y-5">
+							<div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-4">
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500" />
+									<span className="font-medium">Publish Now</span>
+								</div>
+								<button
+									onClick={() => setPublishNow(!publishNow)}
+									className={`relative h-7 w-14 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 ${
+										publishNow ? "bg-primary" : "bg-muted-foreground/40"
+									}`}
+									type="button"
+									aria-pressed={publishNow}
+								>
+									<span
+										className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out ${
+											publishNow ? "translate-x-7" : "translate-x-0"
+										}`}
+									/>
+								</button>
+							</div>
+
+							{!publishNow && (
+								<div className="space-y-4">
+									<div className="space-y-2">
+										<label className="flex items-center gap-2 text-sm font-medium">
+											<CalendarIcon className="h-4 w-4" />
+											Select Date
+										</label>
+										<Popover>
+											<PopoverTrigger
+												className={cn(
+													"w-full flex items-center justify-start gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm transition-colors hover:bg-muted",
+													!scheduleDate && "text-muted-foreground",
+												)}
+											>
+												<CalendarIcon className="h-4 w-4" />
+												{scheduleDate
+													? format(scheduleDate, "PPP")
+													: "Choose a date"}
+											</PopoverTrigger>
+											<PopoverContent className="w-auto p-0">
+												<Calendar
+													mode="single"
+													selected={scheduleDate}
+													onSelect={setScheduleDate}
+													disabled={(date) => date < new Date()}
+												/>
+											</PopoverContent>
+										</Popover>
+									</div>
+
+									<div className="space-y-2">
+										<label className="flex items-center gap-2 text-sm font-medium">
+											<Clock className="h-4 w-4" />
+											Select Time
+										</label>
+										<div className="flex items-center gap-2">
+											<Select
+												value={
+													scheduleTime
+														? (scheduleTime.split(":")[0] ?? "12")
+														: "12"
+												}
+												onValueChange={(value) => {
+													const hour = parseInt(value ?? "12");
+													const minute = scheduleTime
+														? parseInt(scheduleTime.split(":")[1] ?? "0")
+														: 0;
+													setScheduleTime(
+														`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+													);
+												}}
+											>
+												<SelectTrigger className="flex-1">
+													<SelectValue placeholder="Hour" />
+												</SelectTrigger>
+												<SelectContent>
+													{Array.from({ length: 24 }, (_, i) => (
+														<SelectItem key={i} value={i.toString()}>
+															{i.toString().padStart(2, "0")}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<span className="text-muted-foreground font-medium">
+												:
+											</span>
+											<Select
+												value={
+													scheduleTime
+														? (scheduleTime.split(":")[1] ?? "0")
+														: "0"
+												}
+												onValueChange={(value) => {
+													const minute = parseInt(value ?? "0");
+													const hour = scheduleTime
+														? parseInt(scheduleTime.split(":")[0] ?? "12")
+														: 12;
+													setScheduleTime(
+														`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+													);
+												}}
+											>
+												<SelectTrigger className="flex-1">
+													<SelectValue placeholder="Min" />
+												</SelectTrigger>
+												<SelectContent>
+													{Array.from({ length: 60 }, (_, i) => (
+														<SelectItem key={i} value={i.toString()}>
+															{i.toString().padStart(2, "0")}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</div>
+									</div>
+								</div>
+							)}
+
+							<div className="flex gap-3 pt-2">
+								<button
+									onClick={() => setShowScheduleModal(false)}
+									className="flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={handleSchedulePost}
+									disabled={isSaving}
+									className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:opacity-50"
+								>
+									{isSaving
+										? "Processing..."
+										: publishNow
+											? "Publish Now"
+											: "Schedule Post"}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{showSuccessDialog && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-2xl">
+						<div className="mb-4 flex justify-center">
+							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+								<CheckCircle className="h-10 w-10 text-green-500" />
+							</div>
+						</div>
+						<h3 className="mb-2 text-xl font-bold">Draft Saved!</h3>
+						<p className="mb-6 text-sm text-muted-foreground">
+							Your post has been saved as a draft. You can find it in your posts
+							gallery.
+						</p>
+						<button
+							onClick={() => {
+								setShowSuccessDialog(false);
+								setGeneratedImage(null);
+								setFormData(defaultFormData);
+								if (models.length > 0) {
+									setFormData((prev) => ({
+										...prev,
+										modelId: models[0].id,
+									}));
+								}
+							}}
+							className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+						>
+							Done
+						</button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

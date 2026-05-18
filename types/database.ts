@@ -32,14 +32,13 @@ export interface Post {
 	id: string;
 	user_id: string;
 	model_id: string | null;
-	content: string | null;
-	image_url: string | null;
-	platform: string | null;
+	caption: string | null;
+	image_url: string;
+	platform: string;
 	status: string;
 	scheduled_at: string | null;
 	credits_spent: number;
 	created_at: string;
-	updated_at: string;
 }
 
 export interface CreditTransaction {
@@ -65,7 +64,7 @@ export type ModelFormData = {
 
 export type PostFormData = {
 	modelId: string;
-	content: string;
+	caption: string;
 	platform: string;
 	scheduledAt?: string;
 };
