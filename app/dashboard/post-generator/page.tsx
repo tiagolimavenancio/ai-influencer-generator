@@ -50,6 +50,7 @@ import {
 	createPost,
 	deductCredits,
 	addCredits,
+	getSocialAccounts,
 	Model,
 } from "@/lib/db";
 import { format } from "date-fns";
@@ -223,7 +224,7 @@ interface FormData {
 
 const defaultFormData: FormData = {
 	modelId: "",
-	platform: "instagram",
+	platform: "",
 	format: "single",
 	campaignName: "",
 	product: "",
@@ -263,6 +264,7 @@ export default function PostGeneratorPage() {
 	const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
 	const [scheduleTime, setScheduleTime] = useState("");
 	const [publishNow, setPublishNow] = useState(true);
+	const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const isTestMode = process.env.NEXT_PUBLIC_LUMA_MOCK === "true";
@@ -270,16 +272,22 @@ export default function PostGeneratorPage() {
 	useEffect(() => {
 		async function loadData() {
 			if (user) {
-				const [modelsData, profile] = await Promise.all([
+				const [modelsData, profile, socialAccounts] = await Promise.all([
 					getModels(user.id),
 					getProfile(user.id),
+					getSocialAccounts(user.id),
 				]);
 				setModels(modelsData);
+				const platforms = socialAccounts.map((a) => a.platform);
+				setConnectedPlatforms(platforms);
 				if (profile) {
 					setCredits(profile.credits);
 				}
 				if (modelsData.length > 0) {
 					setFormData((prev) => ({ ...prev, modelId: modelsData[0].id }));
+				}
+				if (platforms.length > 0) {
+					setFormData((prev) => ({ ...prev, platform: platforms[0] }));
 				}
 			}
 			setIsLoadingModels(false);
@@ -455,7 +463,7 @@ export default function PostGeneratorPage() {
 			formData.modelId,
 			formData.caption,
 			generatedImage,
-			formData.platform,
+			formData.platform || "draft",
 			undefined,
 			"draft",
 		);
@@ -579,36 +587,69 @@ export default function PostGeneratorPage() {
 		</div>
 	);
 
-	const renderPlatformTabs = () => (
-		<div className="space-y-4">
-			<label className="text-sm font-medium">Platform</label>
-			<div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-				{platformOptions.map((platform) => {
-					const Icon = platform.icon;
-					return (
-						<button
-							key={platform.id}
-							onClick={() =>
-								setFormData((prev) => ({ ...prev, platform: platform.id }))
-							}
-							className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all ${
-								formData.platform === platform.id
-									? "border-primary bg-primary/10"
-									: "border-border hover:border-primary/50"
-							}`}
+	const renderPlatformTabs = () => {
+		const availablePlatforms = platformOptions.filter((p) =>
+			connectedPlatforms.includes(p.id),
+		);
+
+		return (
+			<div className="space-y-4">
+				<label className="text-sm font-medium">Platform</label>
+
+				{availablePlatforms.length > 0 ? (
+					<div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+						{availablePlatforms.map((platform) => {
+							const Icon = platform.icon;
+							return (
+								<button
+									key={platform.id}
+									onClick={() =>
+										setFormData((prev) => ({
+											...prev,
+											platform: platform.id,
+										}))
+									}
+									className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all ${
+										formData.platform === platform.id
+											? "border-primary bg-primary/10"
+											: "border-border hover:border-primary/50"
+									}`}
+								>
+									<div
+										className={`flex h-10 w-10 items-center justify-center rounded-full ${platform.color} text-white`}
+									>
+										<Icon className="h-5 w-5" />
+									</div>
+									<span className="text-xs font-medium">{platform.label}</span>
+								</button>
+							);
+						})}
+					</div>
+				) : (
+					<div className="rounded-lg border border-dashed border-border bg-muted/30 p-5 text-center">
+						<p className="text-sm text-muted-foreground">
+							No social media accounts connected.
+						</p>
+						<Link
+							href="/dashboard/accounts"
+							className="mt-2 inline-block text-sm font-semibold text-primary underline underline-offset-2"
 						>
-							<div
-								className={`flex h-10 w-10 items-center justify-center rounded-full ${platform.color} text-white`}
-							>
-								<Icon className="h-5 w-5" />
-							</div>
-							<span className="text-xs font-medium">{platform.label}</span>
-						</button>
-					);
-				})}
+							Connect a social account
+						</Link>
+					</div>
+				)}
+
+				{connectedPlatforms.length > 0 && (
+					<Link
+						href="/dashboard/accounts"
+						className="block text-center text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+					>
+						Connect more accounts
+					</Link>
+				)}
 			</div>
-		</div>
-	);
+		);
+	};
 
 	const renderPostFormat = () => (
 		<div className="space-y-4">
@@ -942,7 +983,7 @@ export default function PostGeneratorPage() {
 	const renderReferenceImages = () => (
 		<div className="space-y-4">
 			<div className="space-y-2">
-				<label className="text-sm font-medium">Reference Images (Max 3)</label>
+				<label className="text-sm font-medium">Max 3 Images</label>
 				<div className="flex gap-3">
 					{formData.referenceImages.map((img, index) => (
 						<div
@@ -1191,9 +1232,7 @@ export default function PostGeneratorPage() {
 					</div>
 
 					<div className="rounded-xl border border-border bg-card p-6">
-						<h3 className="mb-4 text-lg font-semibold">
-							Reference Images & Prompt
-						</h3>
+						<h3 className="mb-4 text-lg font-semibold">Reference Images</h3>
 						{renderReferenceImages()}
 					</div>
 				</div>
@@ -1237,7 +1276,10 @@ export default function PostGeneratorPage() {
 										onClick={() => setShowSaveOptions(true)}
 										className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold shadow-sm transition-all hover:bg-primary/90"
 									>
-										Save or Schedule Post
+										{formData.platform &&
+										connectedPlatforms.includes(formData.platform)
+											? "Save or Schedule Post"
+											: "Save as Draft"}
 									</button>
 								) : (
 									<div className="space-y-3">
@@ -1250,15 +1292,18 @@ export default function PostGeneratorPage() {
 												<Bookmark className="h-5 w-5" />
 												<span>Save as Draft</span>
 											</button>
-											<button
-												className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card px-4 py-4 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-muted"
-												onClick={() => {
-													setShowScheduleModal(true);
-												}}
-											>
-												<CalendarIcon className="h-5 w-5" />
-												<span>Schedule</span>
-											</button>
+											{formData.platform &&
+												connectedPlatforms.includes(formData.platform) && (
+													<button
+														className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-card px-4 py-4 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-muted"
+														onClick={() => {
+															setShowScheduleModal(true);
+														}}
+													>
+														<CalendarIcon className="h-5 w-5" />
+														<span>Schedule</span>
+													</button>
+												)}
 										</div>
 
 										<button
@@ -1270,6 +1315,12 @@ export default function PostGeneratorPage() {
 													setFormData((prev) => ({
 														...prev,
 														modelId: models[0].id,
+													}));
+												}
+												if (connectedPlatforms.length > 0) {
+													setFormData((prev) => ({
+														...prev,
+														platform: connectedPlatforms[0],
 													}));
 												}
 											}}
