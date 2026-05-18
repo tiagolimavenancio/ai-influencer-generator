@@ -67,6 +67,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { TimePicker } from "@/components/ui/time-picker";
 import { cn } from "@/lib/utils";
 
 const platformOptions = [
@@ -503,6 +504,23 @@ export default function PostGeneratorPage() {
 		);
 
 		if (post) {
+			try {
+				await fetch("/api/zernio/schedule", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						caption: formData.caption,
+						imageUrl: generatedImage,
+						scheduledAt,
+						platform: formData.platform,
+						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+						publishNow,
+					}),
+				});
+			} catch (e) {
+				console.error("Failed to schedule via Zernio:", e);
+			}
+
 			setShowScheduleModal(false);
 			setShowSaveOptions(false);
 			setGeneratedImage(null);
@@ -1469,65 +1487,7 @@ export default function PostGeneratorPage() {
 											<Clock className="h-4 w-4" />
 											Select Time
 										</label>
-										<div className="flex items-center gap-2">
-											<Select
-												value={
-													scheduleTime
-														? (scheduleTime.split(":")[0] ?? "12")
-														: "12"
-												}
-												onValueChange={(value) => {
-													const hour = parseInt(value ?? "12");
-													const minute = scheduleTime
-														? parseInt(scheduleTime.split(":")[1] ?? "0")
-														: 0;
-													setScheduleTime(
-														`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-													);
-												}}
-											>
-												<SelectTrigger className="flex-1">
-													<SelectValue placeholder="Hour" />
-												</SelectTrigger>
-												<SelectContent>
-													{Array.from({ length: 24 }, (_, i) => (
-														<SelectItem key={i} value={i.toString()}>
-															{i.toString().padStart(2, "0")}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-											<span className="text-muted-foreground font-medium">
-												:
-											</span>
-											<Select
-												value={
-													scheduleTime
-														? (scheduleTime.split(":")[1] ?? "0")
-														: "0"
-												}
-												onValueChange={(value) => {
-													const minute = parseInt(value ?? "0");
-													const hour = scheduleTime
-														? parseInt(scheduleTime.split(":")[0] ?? "12")
-														: 12;
-													setScheduleTime(
-														`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-													);
-												}}
-											>
-												<SelectTrigger className="flex-1">
-													<SelectValue placeholder="Min" />
-												</SelectTrigger>
-												<SelectContent>
-													{Array.from({ length: 60 }, (_, i) => (
-														<SelectItem key={i} value={i.toString()}>
-															{i.toString().padStart(2, "0")}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</div>
+										<TimePicker value={scheduleTime} onChange={setScheduleTime} />
 									</div>
 								</div>
 							)}

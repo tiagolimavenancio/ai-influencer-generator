@@ -36,6 +36,7 @@ import {
   FileText,
   CheckCircle2,
 } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -172,6 +173,23 @@ export default function CalendarPage() {
       caption: editableCaption || null,
     });
     if (result) {
+      try {
+        await fetch("/api/zernio/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caption: editableCaption || selectedDraft.caption,
+            imageUrl: selectedDraft.image_url,
+            scheduledAt,
+            platform: selectedDraft.platform,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            publishNow: false,
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to schedule via Zernio:", e);
+      }
+
       setPosts((prev) =>
         prev.map((p) => (p.id === result.id ? result : p)),
       );
@@ -526,69 +544,7 @@ export default function CalendarPage() {
                           <Clock className="size-3.5" />
                           Select Time
                         </label>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={
-                              scheduleTime
-                                ? (scheduleTime.split(":")[0] ?? "12")
-                                : "12"
-                            }
-                            onValueChange={(value) => {
-                              const hour = parseInt(value ?? "12");
-                              const minute = scheduleTime
-                                ? parseInt(
-                                    scheduleTime.split(":")[1] ?? "0",
-                                  )
-                                : 0;
-                              setScheduleTime(
-                                `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-                              );
-                            }}
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Hour" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 24 }, (_, i) => (
-                                <SelectItem key={i} value={i.toString()}>
-                                  {i.toString().padStart(2, "0")}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            :
-                          </span>
-                          <Select
-                            value={
-                              scheduleTime
-                                ? (scheduleTime.split(":")[1] ?? "0")
-                                : "0"
-                            }
-                            onValueChange={(value) => {
-                              const minute = parseInt(value ?? "0");
-                              const hour = scheduleTime
-                                ? parseInt(
-                                    scheduleTime.split(":")[0] ?? "12",
-                                  )
-                                : 12;
-                              setScheduleTime(
-                                `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-                              );
-                            }}
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Min" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 60 }, (_, i) => (
-                                <SelectItem key={i} value={i.toString()}>
-                                  {i.toString().padStart(2, "0")}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <TimePicker value={scheduleTime} onChange={setScheduleTime} />
                       </div>
 
                       <div className="mt-auto flex gap-2 pt-2">
@@ -722,61 +678,7 @@ export default function CalendarPage() {
                       <Clock className="size-3.5" />
                       Select Time
                     </label>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={
-                          editTime ? (editTime.split(":")[0] ?? "12") : "12"
-                        }
-                        onValueChange={(value) => {
-                          const hour = parseInt(value ?? "12");
-                          const minute = editTime
-                            ? parseInt(editTime.split(":")[1] ?? "0")
-                            : 0;
-                          setEditTime(
-                            `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-                          );
-                        }}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Hour" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        :
-                      </span>
-                      <Select
-                        value={
-                          editTime ? (editTime.split(":")[1] ?? "0") : "0"
-                        }
-                        onValueChange={(value) => {
-                          const minute = parseInt(value ?? "0");
-                          const hour = editTime
-                            ? parseInt(editTime.split(":")[0] ?? "12")
-                            : 12;
-                          setEditTime(
-                            `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-                          );
-                        }}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Min" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <TimePicker value={editTime} onChange={setEditTime} />
                   </div>
 
                   <div className="mt-auto flex gap-2 pt-2">
@@ -797,6 +699,23 @@ export default function CalendarPage() {
                           caption: editCaption || null,
                         });
                         if (result) {
+                          try {
+                            await fetch("/api/zernio/schedule", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                caption: editCaption || editingPost.caption,
+                                imageUrl: editingPost.image_url,
+                                scheduledAt,
+                                platform: editingPost.platform,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                publishNow: false,
+                              }),
+                            });
+                          } catch (e) {
+                            console.error("Failed to schedule via Zernio:", e);
+                          }
+
                           setPosts((prev) =>
                             prev.map((p) =>
                               p.id === result.id ? result : p,
