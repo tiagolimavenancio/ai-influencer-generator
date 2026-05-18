@@ -5,9 +5,17 @@ import {
 	Profile,
 	CreditTransaction,
 	ModelFormData,
+	SocialAccount,
 } from "@/types/database";
 
-export type { Model, Post, Profile, CreditTransaction, ModelFormData };
+export type {
+	Model,
+	Post,
+	Profile,
+	CreditTransaction,
+	ModelFormData,
+	SocialAccount,
+};
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -301,6 +309,82 @@ export async function uploadModelImage(
 		console.error("uploadModelImage error:", err);
 		return null;
 	}
+}
+
+// Social accounts operations
+export async function getSocialAccounts(
+	userId: string,
+): Promise<SocialAccount[]> {
+	const { data, error } = await supabase
+		.from("social_accounts")
+		.select("*")
+		.eq("user_id", userId)
+		.order("created_at", { ascending: false });
+
+	if (error) {
+		console.error("Error fetching social accounts:", error);
+		return [];
+	}
+	return data || [];
+}
+
+export async function saveSocialAccount(
+	account: Omit<SocialAccount, "id" | "created_at">,
+): Promise<SocialAccount | null> {
+	const { data, error } = await supabase
+		.from("social_accounts")
+		.upsert(
+			{
+				user_id: account.user_id,
+				platform: account.platform,
+				zernio_account_id: account.zernio_account_id,
+		account_name: account.account_name,
+		account_image: account.account_image,
+		username: account.username,
+		followers_count: account.followers_count,
+		profile_url: account.profile_url,
+		zernio_data: account.zernio_data,
+	},
+			{ onConflict: "user_id, platform" },
+		)
+		.select()
+		.single();
+
+	if (error) {
+		console.error("Error saving social account:", error);
+		return null;
+	}
+	return data;
+}
+
+export async function deleteSocialAccount(
+	userId: string,
+	platform: string,
+): Promise<boolean> {
+	const { error } = await supabase
+		.from("social_accounts")
+		.delete()
+		.eq("user_id", userId)
+		.eq("platform", platform);
+
+	if (error) {
+		console.error("Error deleting social account:", error);
+		return false;
+	}
+	return true;
+}
+
+export async function deleteSocialAccountById(id: string): Promise<boolean> {
+	const { error } = await supabase
+		.from("social_accounts")
+		.delete()
+		.eq("id", id);
+
+	if (error) {
+		console.error("Error deleting social account:", error);
+		return false;
+	}
+	return true;
 }
 
 // Helper function to add credits via database function
