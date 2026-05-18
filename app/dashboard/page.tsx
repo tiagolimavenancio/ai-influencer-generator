@@ -6,15 +6,15 @@ import {
 	Eye,
 	Bot,
 	Sparkles,
-	Clock,
 	Plus,
 	Image as ImageIcon,
 } from "lucide-react";
-import { getModels } from "@/lib/db";
 import Image from "next/image";
+import PostGallery from "@/components/dashboard/PostGallery";
 
 export default async function DashboardPage() {
 	let models: import("@/types/database").Model[] = [];
+	let posts: import("@/types/database").Post[] = [];
 	try {
 		const { createServerClient } = await import("@supabase/ssr");
 		const { cookies } = await import("next/headers");
@@ -41,8 +41,10 @@ export default async function DashboardPage() {
 			data: { user },
 		} = await supabase.auth.getUser();
 		if (user) {
-			const { getModels: fetchModels } = await import("@/lib/db");
+			const { getModels: fetchModels, getPosts: fetchPosts } =
+				await import("@/lib/db");
 			models = await fetchModels(user.id);
+			posts = await fetchPosts(user.id);
 		}
 	} catch {}
 
@@ -60,14 +62,24 @@ export default async function DashboardPage() {
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="text-sm text-muted-foreground">Total Content</p>
-							<p className="mt-1 text-3xl font-bold">0</p>
+							<p className="mt-1 text-3xl font-bold">
+								{
+									posts.filter(
+										(p) => p.status === "draft" || p.status === "scheduled",
+									).length
+								}
+							</p>
 						</div>
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
 							<Package className="h-6 w-6 text-primary" />
 						</div>
 					</div>
 					<p className="mt-4 text-sm text-muted-foreground">
-						No content created yet
+						{posts.filter(
+							(p) => p.status === "draft" || p.status === "scheduled",
+						).length === 0
+							? "No content created yet"
+							: "Drafts and scheduled posts"}
 					</p>
 				</div>
 
@@ -75,14 +87,18 @@ export default async function DashboardPage() {
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="text-sm text-muted-foreground">Scheduled Posts</p>
-							<p className="mt-1 text-3xl font-bold">0</p>
+							<p className="mt-1 text-3xl font-bold">
+								{posts.filter((p) => p.status === "scheduled").length}
+							</p>
 						</div>
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
 							<Calendar className="h-6 w-6 text-primary" />
 						</div>
 					</div>
 					<p className="mt-4 text-sm text-muted-foreground">
-						No posts scheduled
+						{posts.filter((p) => p.status === "scheduled").length === 0
+							? "No posts scheduled"
+							: "Awaiting publication"}
 					</p>
 				</div>
 
@@ -238,70 +254,7 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			<div className="mt-8 rounded-lg border border-border bg-card p-6">
-				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-lg font-semibold">Studio Gallery</h2>
-					<Link
-						href="/dashboard/models/create"
-						className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-					>
-						<Plus className="h-3 w-3" />
-						Create Model
-					</Link>
-				</div>
-				{models.length === 0 ? (
-					<div className="flex flex-col items-center justify-center py-16 text-center">
-						<div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-							<Sparkles className="h-8 w-8 text-muted-foreground" />
-						</div>
-						<h3 className="text-lg font-semibold">No AI Models Yet</h3>
-						<p className="mt-2 max-w-md text-sm text-muted-foreground">
-							Start creating your AI influencer models. Each model is unique and
-							customizable to match your brand.
-						</p>
-						<Link
-							href="/dashboard/models/create"
-							className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-						>
-							<Plus className="h-4 w-4" />
-							Create Your First Model
-						</Link>
-					</div>
-				) : (
-					<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-						{models.map((model) => (
-							<div
-								key={model.id}
-								className="group relative overflow-hidden rounded-lg border border-border bg-card"
-							>
-								<div className="relative aspect-square">
-									{model.portrait_url ? (
-										<Image
-											src={model.portrait_url}
-											alt={model.name}
-											fill
-											className="object-cover transition-transform group-hover:scale-105"
-										/>
-									) : (
-										<div className="flex h-full items-center justify-center bg-muted">
-											<ImageIcon className="h-12 w-12 text-muted-foreground" />
-										</div>
-									)}
-								</div>
-								<div className="p-4">
-									<h3 className="font-semibold">{model.name}</h3>
-									<p className="text-sm capitalize text-muted-foreground">
-										{model.gender} - {model.vibe}
-									</p>
-									<p className="mt-1 text-xs text-muted-foreground">
-										{new Date(model.created_at).toLocaleDateString()}
-									</p>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</div>
+			<PostGallery posts={posts} models={models} />
 		</div>
 	);
 }

@@ -204,7 +204,7 @@ export async function updatePost(
 ): Promise<Post | null> {
 	const { data, error } = await supabase
 		.from("posts")
-		.update({ ...updates, updated_at: new Date().toISOString() })
+		.update(updates)
 		.eq("id", postId)
 		.select()
 		.single();

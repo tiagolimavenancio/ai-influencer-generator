@@ -12,6 +12,7 @@ import {
 	Zap,
 	Loader2,
 } from "lucide-react";
+import PostGallery from "@/components/dashboard/PostGallery";
 import { useAuth } from "@/context/AuthContext";
 import {
 	getModels,
@@ -113,7 +114,10 @@ export default function ModelsPage() {
 					</div>
 				</Link>
 
-				<Link href="/dashboard/post-generator" className="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted">
+				<Link
+					href="/dashboard/post-generator"
+					className="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted"
+				>
 					<div className="flex items-center gap-4">
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
 							<FileText className="h-6 w-6 text-primary" />
@@ -208,60 +212,7 @@ export default function ModelsPage() {
 
 				<div>
 					<h2 className="mb-6 text-2xl font-semibold">Recent Posts</h2>
-					{posts.length === 0 ? (
-						<div className="rounded-lg border border-border bg-card p-12 text-center">
-							<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-								<FileText className="h-8 w-8 text-muted-foreground" />
-							</div>
-							<h3 className="text-lg font-semibold">No posts yet</h3>
-							<p className="mt-2 text-sm text-muted-foreground">
-								Generate your first post using your AI influencers
-							</p>
-						</div>
-					) : (
-						<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-							{posts.slice(0, 6).map((post) => (
-								<div
-									key={post.id}
-									className="rounded-lg border border-border bg-card p-4"
-								>
-									<div className="flex items-start gap-3">
-										{post.image_url && (
-											<div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
-												<Image
-													src={post.image_url}
-													alt="Post image"
-													fill
-													className="object-cover"
-												/>
-											</div>
-										)}
-										<div className="min-w-0 flex-1">
-											<p className="text-sm line-clamp-2">
-												{post.caption || "No content"}
-											</p>
-											<div className="mt-2 flex items-center gap-2">
-												<span
-													className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-														post.status === "published"
-															? "bg-green-100 text-green-700"
-															: post.status === "scheduled"
-																? "bg-blue-100 text-blue-700"
-																: "bg-muted text-muted-foreground"
-													}`}
-												>
-													{post.status}
-												</span>
-												<span className="text-xs text-muted-foreground">
-													{post.platform}
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
-							))}
-						</div>
-					)}
+					<PostGallery posts={posts} models={models} embedded />
 				</div>
 			</div>
 		</div>
