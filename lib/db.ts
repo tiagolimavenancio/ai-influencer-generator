@@ -7,6 +7,7 @@ import type {
 	ModelFormData,
 	SocialAccount,
 } from "@/types/database";
+import { MODEL_GENERATION_COST, POST_GENERATION_COST } from "@/lib/constants";
 
 export type {
 	Model,
@@ -74,20 +75,6 @@ export async function getModels(userId: string): Promise<Model[]> {
 	return data || [];
 }
 
-export async function getModel(modelId: string): Promise<Model | null> {
-	const { data, error } = await getClient()
-		.from("models")
-		.select("*")
-		.eq("id", modelId)
-		.single();
-
-	if (error) {
-		console.error("Error fetching model:", error);
-		return null;
-	}
-	return data;
-}
-
 export async function createModel(
 	userId: string,
 	formData: ModelFormData,
@@ -111,7 +98,7 @@ export async function createModel(
 			portrait_url: portraitUrl,
 			full_body_url: fullBodyUrl,
 			prompt,
-			credits_spent: 50,
+			credits_spent: MODEL_GENERATION_COST,
 		})
 		.select()
 		.single();
@@ -151,20 +138,6 @@ export async function getPosts(userId: string): Promise<Post[]> {
 	return data || [];
 }
 
-export async function getPost(postId: string): Promise<Post | null> {
-	const { data, error } = await getClient()
-		.from("posts")
-		.select("*")
-		.eq("id", postId)
-		.single();
-
-	if (error) {
-		console.error("Error fetching post:", error);
-		return null;
-	}
-	return data;
-}
-
 export async function createPost(
 	userId: string,
 	modelId: string | null,
@@ -186,7 +159,7 @@ export async function createPost(
 			platform,
 			status: postStatus,
 			scheduled_at: scheduledAt || null,
-			credits_spent: 20,
+			credits_spent: POST_GENERATION_COST,
 		})
 		.select()
 		.single();
@@ -223,23 +196,6 @@ export async function deletePost(postId: string): Promise<boolean> {
 		return false;
 	}
 	return true;
-}
-
-export async function getCreditTransactions(
-	userId: string,
-): Promise<CreditTransaction[]> {
-	const { data, error } = await getClient()
-		.from("credit_transactions")
-		.select("*")
-		.eq("user_id", userId)
-		.order("created_at", { ascending: false })
-		.limit(50);
-
-	if (error) {
-		console.error("Error fetching transactions:", error);
-		return [];
-	}
-	return data || [];
 }
 
 export async function deductCredits(
@@ -343,109 +299,6 @@ export async function saveSocialAccount(
 	}
 	return data;
 }
-
-export async function deleteSocialAccount(
-	userId: string,
-	platform: string,
-): Promise<boolean> {
-	const { error } = await getClient()
-		.from("social_accounts")
-		.delete()
-		.eq("user_id", userId)
-		.eq("platform", platform);
-
-	if (error) {
-		console.error("Error deleting social account:", error);
-		return false;
-	}
-	return true;
-}
-
-export async function deleteSocialAccountById(id: string): Promise<boolean> {
-	const { error } = await getClient()
-		.from("social_accounts")
-		.delete()
-		.eq("id", id);
-
-	if (error) {
-		console.error("Error deleting social account:", error);
-		return false;
-	}
-	return true;
-}
-
-export async function updateSubscription(
-	userId: string,
-	updates: {
-		stripe_customer_id?: string;
-		stripe_subscription_id?: string;
-		plan?: string;
-		subscription_period_end?: string;
-	},
-): Promise<Profile | null> {
-	const { data, error } = await getClient()
-		.from("profiles")
-		.update({ ...updates, updated_at: new Date().toISOString() })
-		.eq("id", userId)
-		.select()
-		.single();
-
-	if (error) {
-		console.error("Error updating subscription:", error);
-		return null;
-	}
-	return data;
-}
-
-export const SUBSCRIPTION_PLANS = {
-	free: {
-		id: "free",
-		name: "Free",
-		price: 0,
-		credits: 300,
-		description: "Best for trying the app",
-		features: {
-			monthlyCredits: "300 credits",
-			aiCreationCost: "50 credits",
-			postCreationCost: "20 credits",
-			connectedAccounts: "1 account",
-			autoPostScheduling: "Up to 5 scheduled posts",
-		},
-		stripePrice: 0,
-	},
-	standard: {
-		id: "standard",
-		name: "Standard",
-		price: 9.99,
-		credits: 2000,
-		description: "Best for creators & small teams",
-		features: {
-			monthlyCredits: "2,000 credits/month",
-			aiCreationCost: "50 credits",
-			postCreationCost: "20 credits",
-			connectedAccounts: "Up to 5 accounts",
-			autoPostScheduling: "Unlimited scheduled posts",
-		},
-		stripePrice: 999,
-	},
-	pro: {
-		id: "pro",
-		name: "Pro",
-		price: 29.99,
-		credits: 10000,
-		description: "Best for power users & agencies",
-		features: {
-			monthlyCredits: "10,000 credits/month",
-			aiCreationCost: "50 credits",
-			postCreationCost: "20 credits",
-			connectedAccounts: "Unlimited accounts",
-			autoPostScheduling: "Unlimited scheduled posts",
-		},
-		stripePrice: 2999,
-	},
-} as const;
-
-export type SubscriptionPlanId = keyof typeof SUBSCRIPTION_PLANS;
 
 export async function addCredits(
 	userId: string,

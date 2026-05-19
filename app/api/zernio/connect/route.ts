@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-
-const ZERNIO_BASE = "https://zernio.com/api/v1";
+import { ZERNIO_BASE } from "@/lib/constants";
 
 async function createProfile(apiKey: string) {
 	const res = await fetch(`${ZERNIO_BASE}/profiles`, {

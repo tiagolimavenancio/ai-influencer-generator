@@ -2,14 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { PLANS } from "@/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-const PLANS: Record<string, { amount: number; name: string; credits: number }> =
-	{
-		standard: { amount: 999, name: "Standard", credits: 2000 },
-		pro: { amount: 2999, name: "Pro", credits: 10000 },
-	};
 
 export async function POST(request: NextRequest) {
 	try {

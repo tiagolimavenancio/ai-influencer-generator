@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import PostGallery from "@/components/dashboard/PostGallery";
 import { useAuth } from "@/context/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
 import {
 	getModels,
 	getPosts,
-	getProfile,
 	deleteModel,
 	Model,
 	Post,
@@ -25,26 +25,20 @@ import {
 
 export default function ModelsPage() {
 	const { user, isLoading: authLoading } = useAuth();
+	const { credits, isLoadingCredits } = useCredits();
 	const [models, setModels] = useState<Model[]>([]);
 	const [posts, setPosts] = useState<Post[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [credits, setCredits] = useState(300);
-	const [isLoadingCredits, setIsLoadingCredits] = useState(true);
 
 	useEffect(() => {
 		async function loadData() {
 			if (user) {
-				const [modelsData, postsData, profile] = await Promise.all([
+				const [modelsData, postsData] = await Promise.all([
 					getModels(user.id),
 					getPosts(user.id),
-					getProfile(user.id),
 				]);
 				setModels(modelsData);
 				setPosts(postsData);
-				if (profile) {
-					setCredits(profile.credits);
-				}
-				setIsLoadingCredits(false);
 			}
 			setIsLoading(false);
 		}

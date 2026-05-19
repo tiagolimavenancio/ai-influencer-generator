@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import {
-	getProfile,
-	SUBSCRIPTION_PLANS,
-	type SubscriptionPlanId,
-} from "@/lib/db";
+import { getProfile } from "@/lib/db";
+import { SUBSCRIPTION_PLANS, type SubscriptionPlanId } from "@/lib/constants";
 import type { Profile } from "@/types/database";
 import {
 	CheckCircle,

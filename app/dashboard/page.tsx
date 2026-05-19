@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import PostGallery from "@/components/dashboard/PostGallery";
+import { StatCard } from "@/components/dashboard/StatCard";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -38,81 +39,38 @@ export default async function DashboardPage() {
 			</div>
 
 			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-				<div className="rounded-lg border border-border bg-card p-6">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-muted-foreground">Total Content</p>
-							<p className="mt-1 text-3xl font-bold">
-								{
-									posts.filter(
-										(p) => p.status === "draft" || p.status === "scheduled",
-									).length
-								}
-							</p>
-						</div>
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-							<Package className="h-6 w-6 text-primary" />
-						</div>
-					</div>
-					<p className="mt-4 text-sm text-muted-foreground">
-						{posts.filter(
-							(p) => p.status === "draft" || p.status === "scheduled",
-						).length === 0
+				<StatCard
+					title="Total Content"
+					value={posts.filter((p) => p.status === "draft" || p.status === "scheduled").length}
+					description={
+						posts.filter((p) => p.status === "draft" || p.status === "scheduled").length === 0
 							? "No content created yet"
-							: "Drafts and scheduled posts"}
-					</p>
-				</div>
-
-				<div className="rounded-lg border border-border bg-card p-6">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-muted-foreground">Scheduled Posts</p>
-							<p className="mt-1 text-3xl font-bold">
-								{posts.filter((p) => p.status === "scheduled").length}
-							</p>
-						</div>
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-							<Calendar className="h-6 w-6 text-primary" />
-						</div>
-					</div>
-					<p className="mt-4 text-sm text-muted-foreground">
-						{posts.filter((p) => p.status === "scheduled").length === 0
+							: "Drafts and scheduled posts"
+					}
+					icon={Package}
+				/>
+				<StatCard
+					title="Scheduled Posts"
+					value={posts.filter((p) => p.status === "scheduled").length}
+					description={
+						posts.filter((p) => p.status === "scheduled").length === 0
 							? "No posts scheduled"
-							: "Awaiting publication"}
-					</p>
-				</div>
-
-				<div className="rounded-lg border border-border bg-card p-6">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-muted-foreground">
-								Connected Accounts
-							</p>
-							<p className="mt-1 text-3xl font-bold">0</p>
-						</div>
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-							<Users className="h-6 w-6 text-primary" />
-						</div>
-					</div>
-					<p className="mt-4 text-sm text-muted-foreground">
-						Connect your social accounts
-					</p>
-				</div>
-
-				<div className="rounded-lg border border-border bg-card p-6">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-muted-foreground">Total Views</p>
-							<p className="mt-1 text-3xl font-bold">0</p>
-						</div>
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-							<Eye className="h-6 w-6 text-primary" />
-						</div>
-					</div>
-					<p className="mt-4 text-sm text-muted-foreground">
-						Track your content performance
-					</p>
-				</div>
+							: "Awaiting publication"
+					}
+					icon={Calendar}
+				/>
+				<StatCard
+					title="Connected Accounts"
+					value={0}
+					description="Connect your social accounts"
+					icon={Users}
+				/>
+				<StatCard
+					title="Total Views"
+					value={0}
+					description="Track your content performance"
+					icon={Eye}
+				/>
 			</div>
 
 			<div className="mt-8 grid gap-6 lg:grid-cols-2">

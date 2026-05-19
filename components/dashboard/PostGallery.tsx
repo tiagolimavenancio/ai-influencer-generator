@@ -520,7 +520,10 @@ export default function PostGallery({
 													<Clock className="size-3.5" />
 													Select Time
 												</label>
-												<TimePicker value={scheduleTime} onChange={setScheduleTime} />
+												<TimePicker
+													value={scheduleTime}
+													onChange={setScheduleTime}
+												/>
 											</div>
 										</div>
 									)}

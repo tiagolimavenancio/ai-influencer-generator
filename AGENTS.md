@@ -1,6 +1,6 @@
 # Composed Claude Code Configuration
 
-This configuration combines: Next.js 15, shadcn/ui
+This configuration combines: Next.js 15+, shadcn/ui, tailwindcss
 
 ---
 
@@ -50,6 +50,206 @@ This is a shadcn/ui project focused on:
 5. **Configure proper caching** strategies
 6. **Enable Partial Prerendering** (experimental) when stable
 7. **Monitor Core Web Vitals**
+
+## Architecture
+
+- Use Next.js App Router only.
+- Prefer Server Components by default.
+- Use Client Components only for interactivity.
+- Prefer Server Actions for mutations and form handling.
+- Avoid client-side data fetching when server-side fetching is possible.
+- Keep business logic outside page components whenever possible.
+
+---
+
+## Code Quality — Clean Code
+
+- Use descriptive and intention-revealing names in English.
+  Prefer `fetchUserOrders()` over `getData()`.
+- Functions and components must have a single responsibility.
+  They should do one thing and do it well.
+- Prefer self-documenting code over excessive comments.
+  Comments should explain *why*, not *what*.
+- Keep functions and components small and cohesive.
+  Prefer extracting logic when a function exceeds ~20–30 lines.
+- Avoid magic numbers and hardcoded strings.
+  Use named constants in `lib/constants.ts`.
+- Prefer early returns to reduce nesting and improve readability.
+- Prefer readability and maintainability over clever abstractions.
+- Avoid deeply nested conditionals and deeply nested JSX.
+- Keep files focused and cohesive.
+  Do not mix unrelated responsibilities in the same file.
+
+---
+
+## DRY — Avoid Duplication
+
+- Before creating new components, hooks, utilities, or Server Actions:
+  search for existing reusable implementations first.
+- Shared data fetching and transformation logic belongs in `lib/`.
+- Reusable UI components belong in `components/ui/`.
+- Shared Server Actions belong in `actions/` at the project root.
+- If the same JSX structure appears more than once:
+  extract a reusable component.
+- If the same stateful logic appears more than once:
+  extract a reusable custom hook.
+- Avoid near-duplicate components and utilities.
+- Prefer extending existing abstractions over creating similar ones.
+
+---
+
+## Custom Hooks
+
+- Extract stateful logic into custom hooks whenever a component contains:
+  - 3 or more `useState` calls
+  - 2 or more `useEffect` calls
+  - mixed async logic and rendering responsibilities
+
+- Place hooks inside `hooks/` at the project root.
+
+- Hook files must use the `use*` naming convention.
+  Example: `useUserProfile.ts`.
+
+- Hooks must have a single responsibility.
+  Prefer `useAuth`, `useCart`, `useForm`
+  over generic hooks like `usePageLogic`.
+
+- Hooks must not return JSX.
+  If JSX is returned, it should be a component instead.
+
+- Prefer composing small hooks over creating large generic hooks.
+
+- Document hook contracts clearly:
+  - inputs
+  - outputs
+  - side effects
+  - dependencies
+
+---
+
+## React and State Management
+
+- Minimize unnecessary `useState` and `useEffect` usage.
+
+- Prefer derived state over duplicated state.
+
+- Avoid syncing state with state.
+
+- Avoid `useEffect` for simple derived values.
+
+- Prefer server-side data fetching whenever possible.
+
+- Keep state as close as possible to where it is used.
+
+- Prefer controlled and predictable state flows.
+
+---
+
+## Components
+
+- Prefer small and focused components.
+
+- Separate presentation from business logic whenever possible.
+
+- Avoid large page components with excessive responsibilities.
+
+- Keep component trees shallow and understandable.
+
+- Prefer composition over prop drilling.
+
+---
+
+## TypeScript
+
+- Use strict TypeScript typing.
+
+- Avoid `any` whenever possible.
+
+- Prefer explicit types for public APIs, hooks, and shared utilities.
+
+- Keep types close to their domain when possible.
+
+- Shared types belong in `types/`.
+
+---
+
+## Validation
+
+- Use Zod for schema validation.
+
+- Validate all external inputs:
+  - forms
+  - API payloads
+  - query params
+  - environment variables
+
+---
+
+## Performance
+
+- Avoid unnecessary client components.
+
+- Avoid unnecessary re-renders.
+
+- Prefer streaming and Suspense when appropriate.
+
+- Lazy load heavy components when possible.
+
+- Keep bundle size minimal.
+
+---
+
+## Operational Rules
+
+- Never run `npm run build` during iterative agent sessions.
+
+- Use the development server during implementation.
+
+- Run lint and type-check validation before completing tasks.
+
+- Keep the application functional after every refactor step.
+
+- Refactor incrementally instead of rewriting large sections at once.
+
+---
+
+## Refactoring Rules
+
+- When modifying existing code:
+  improve readability and maintainability when possible.
+
+- Remove dead code during refactors.
+
+- Simplify overly complex logic.
+
+- Preserve behavior unless explicitly instructed otherwise.
+
+- Prefer incremental improvements over large rewrites.
+
+---
+
+## Expected Custom Hook Structure
+
+```ts
+// hooks/useUserProfile.ts
+
+export function useUserProfile(userId: string) {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    // isolated logic here
+  }, [userId])
+
+  return {
+    profile,
+    isLoading,
+    error,
+  }
+}
+```
+
 
 ## ⚠️ Breaking Changes from Next.js 14
 
