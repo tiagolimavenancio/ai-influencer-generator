@@ -202,13 +202,9 @@ This is a shadcn/ui project focused on:
 ## Operational Rules
 
 - Never run `npm run build` during iterative agent sessions.
-
 - Use the development server during implementation.
-
 - Run lint and type-check validation before completing tasks.
-
 - Keep the application functional after every refactor step.
-
 - Refactor incrementally instead of rewriting large sections at once.
 
 ---
@@ -219,11 +215,8 @@ This is a shadcn/ui project focused on:
   improve readability and maintainability when possible.
 
 - Remove dead code during refactors.
-
 - Simplify overly complex logic.
-
 - Preserve behavior unless explicitly instructed otherwise.
-
 - Prefer incremental improvements over large rewrites.
 
 ---

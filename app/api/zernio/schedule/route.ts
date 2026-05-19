@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
 			},
 		);
 
-		const { data: { user } } = await supabase.auth.getUser();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
 		if (!user) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
@@ -64,9 +66,7 @@ export async function POST(request: NextRequest) {
 		const body: Record<string, unknown> = {
 			content: caption || "",
 			mediaItems: [{ url: imageUrl, type: "image" }],
-			platforms: [
-				{ platform, accountId: socialAccount.zernio_account_id },
-			],
+			platforms: [{ platform, accountId: socialAccount.zernio_account_id }],
 		};
 
 		if (publishNow) {

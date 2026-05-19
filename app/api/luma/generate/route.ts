@@ -18,11 +18,16 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		if (process.env.LUMA_MOCK === "true" || process.env.NEXT_PUBLIC_LUMA_MOCK === "true") {
+		if (
+			process.env.LUMA_MOCK === "true" ||
+			process.env.NEXT_PUBLIC_LUMA_MOCK === "true"
+		) {
 			await new Promise((resolve) => setTimeout(resolve, 2000));
-			const type = prompt.toLowerCase().includes("portrait") || prompt.toLowerCase().includes("headshot")
-				? "portrait"
-				: "full-body";
+			const type =
+				prompt.toLowerCase().includes("portrait") ||
+				prompt.toLowerCase().includes("headshot")
+					? "portrait"
+					: "full-body";
 			return NextResponse.json({
 				imageUrl: getMockImageUrl(type),
 				_mock: true,

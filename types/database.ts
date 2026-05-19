@@ -75,15 +75,15 @@ export type PostFormData = {
 };
 
 export interface SocialAccount {
-  id: string;
-  user_id: string;
-  platform: string;
-  zernio_account_id: string;
-  account_name: string | null;
-  account_image: string | null;
-  username: string | null;
-  followers_count: number | null;
-  profile_url: string | null;
-  zernio_data: unknown | null;
-  created_at: string;
+	id: string;
+	user_id: string;
+	platform: string;
+	zernio_account_id: string;
+	account_name: string | null;
+	account_image: string | null;
+	username: string | null;
+	followers_count: number | null;
+	profile_url: string | null;
+	zernio_data: unknown | null;
+	created_at: string;
 }

@@ -50,7 +50,9 @@ export async function GET() {
 				},
 			);
 
-			const { data: { user } } = await supabase.auth.getUser();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
 			if (user) {
 				const { data: existingAccounts } = await supabase
 					.from("social_accounts")
@@ -75,7 +77,10 @@ export async function GET() {
 							if (!existing.username && zernioAcc.username) {
 								updates.username = zernioAcc.username;
 							}
-							if (!existing.followers_count && zernioAcc.followersCount != null) {
+							if (
+								!existing.followers_count &&
+								zernioAcc.followersCount != null
+							) {
 								updates.followers_count = zernioAcc.followersCount;
 							}
 							if (!existing.profile_url && zernioAcc.profileUrl) {
@@ -103,7 +108,10 @@ export async function GET() {
 	} catch (error) {
 		console.error("Zernio list accounts error:", error);
 		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Failed to list accounts" },
+			{
+				error:
+					error instanceof Error ? error.message : "Failed to list accounts",
+			},
 			{ status: 500 },
 		);
 	}

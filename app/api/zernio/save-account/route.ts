@@ -4,7 +4,16 @@ import { cookies } from "next/headers";
 
 export async function POST(request: NextRequest) {
 	try {
-		const { zernioAccountId, platform, accountName, accountImage, username, followersCount, profileUrl, zernioData } = await request.json();
+		const {
+			zernioAccountId,
+			platform,
+			accountName,
+			accountImage,
+			username,
+			followersCount,
+			profileUrl,
+			zernioData,
+		} = await request.json();
 
 		if (!zernioAccountId || !platform) {
 			return NextResponse.json(
@@ -31,7 +40,9 @@ export async function POST(request: NextRequest) {
 			},
 		);
 
-		const { data: { user } } = await supabase.auth.getUser();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
 		if (!user) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
@@ -67,7 +78,10 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
 		console.error("Save account error:", error);
 		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Failed to save account" },
+			{
+				error:
+					error instanceof Error ? error.message : "Failed to save account",
+			},
 			{ status: 500 },
 		);
 	}

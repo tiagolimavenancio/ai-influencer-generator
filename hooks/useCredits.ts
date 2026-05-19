@@ -1,36 +1,36 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { getProfile } from '@/lib/db';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { getProfile } from "@/lib/db";
 
 export function useCredits() {
-  const { user, isLoading: authLoading } = useAuth();
-  const [credits, setCredits] = useState(300);
-  const [loaded, setLoaded] = useState(false);
-  const initialized = useRef(false);
+	const { user, isLoading: authLoading } = useAuth();
+	const [credits, setCredits] = useState(300);
+	const [loaded, setLoaded] = useState(false);
+	const initialized = useRef(false);
 
-  const loadCredits = useCallback(async () => {
-    if (!user || initialized.current) return;
-    
-    initialized.current = true;
-    try {
-      const profile = await getProfile(user.id);
-      if (profile) {
-        setCredits(profile.credits);
-      }
-    } finally {
-      setLoaded(true);
-    }
-  }, [user?.id]);
+	const loadCredits = useCallback(async () => {
+		if (!user || initialized.current) return;
 
-  useEffect(() => {
-    loadCredits();
-  }, [loadCredits]);
+		initialized.current = true;
+		try {
+			const profile = await getProfile(user.id);
+			if (profile) {
+				setCredits(profile.credits);
+			}
+		} finally {
+			setLoaded(true);
+		}
+	}, [user?.id]);
 
-  return {
-    credits,
-    setCredits,
-    isLoadingCredits: authLoading || !loaded,
-  };
+	useEffect(() => {
+		loadCredits();
+	}, [loadCredits]);
+
+	return {
+		credits,
+		setCredits,
+		isLoadingCredits: authLoading || !loaded,
+	};
 }

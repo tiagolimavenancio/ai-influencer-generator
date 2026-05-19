@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
 			},
 		);
 
-		const { data: { user } } = await supabase.auth.getUser();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
 		if (!user) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
@@ -54,7 +56,9 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
 		console.error("Disconnect error:", error);
 		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Failed to disconnect" },
+			{
+				error: error instanceof Error ? error.message : "Failed to disconnect",
+			},
 			{ status: 500 },
 		);
 	}

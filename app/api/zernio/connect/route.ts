@@ -110,7 +110,10 @@ export async function GET(request: NextRequest) {
 	} catch (error) {
 		console.error("Zernio connect error:", error);
 		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Failed to get connect URL" },
+			{
+				error:
+					error instanceof Error ? error.message : "Failed to get connect URL",
+			},
 			{ status: 500 },
 		);
 	}

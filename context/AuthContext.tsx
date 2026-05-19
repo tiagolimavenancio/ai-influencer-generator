@@ -1,62 +1,73 @@
-'use client'
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { User, Session } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
-  user: User | null
-  session: Session | null
-  isLoading: boolean
-  signOut: () => Promise<void>
+	user: User | null;
+	session: Session | null;
+	isLoading: boolean;
+	signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+	const [user, setUser] = useState<User | null>(null);
+	const [session, setSession] = useState<Session | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const supabase = createClient()
+	useEffect(() => {
+		const supabase = createClient();
 
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsLoading(false)
-    }
+		const getSession = async () => {
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
+			if (session?.user) {
+				setSession(session);
+				setUser(session.user);
+			}
+			setIsLoading(false);
+		};
 
-    getSession()
+		getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsLoading(false)
-    })
+		const {
+			data: { subscription },
+		} = supabase.auth.onAuthStateChange((_event, session) => {
+			if (session?.user) {
+				setSession(session);
+				setUser(session.user);
+			} else {
+				setSession(null);
+				setUser(null);
+			}
+			setIsLoading(false);
+		});
 
-    return () => subscription.unsubscribe()
-  }, [])
+		return () => subscription.unsubscribe();
+	}, []);
 
-  const signOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
-  }
+	const signOut = async () => {
+		const supabase = createClient();
+		await supabase.auth.signOut();
+		setUser(null);
+		setSession(null);
+	};
 
-  return (
-    <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  )
+	return (
+		<AuthContext.Provider value={{ user, session, isLoading, signOut }}>
+			{children}
+		</AuthContext.Provider>
+	);
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+	const context = useContext(AuthContext);
+	if (context === undefined) {
+		throw new Error("useAuth must be used within an AuthProvider");
+	}
+	return context;
 }
