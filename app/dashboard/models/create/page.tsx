@@ -554,7 +554,8 @@ export default function CreateModelPage() {
 						/>
 						{autoPrompt && (
 							<p className="mt-2 text-xs text-muted-foreground">
-								Custom prompt active. Click "Reset to Auto" to restore.
+								Custom prompt active. Click &ldquo;Reset to Auto&rdquo; to
+								restore.
 							</p>
 						)}
 					</div>

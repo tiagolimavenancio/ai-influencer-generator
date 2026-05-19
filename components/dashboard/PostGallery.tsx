@@ -7,17 +7,11 @@ import {
 	Clock,
 	Image as ImageIcon,
 	X,
-	CheckCircle,
-	Camera,
-	Video,
-	MessageCircle,
-	Layout,
-	Building2,
 	Sparkles,
 	ChevronLeft,
 	ChevronRight,
-	FileText,
 	Send,
+	FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { TimePicker } from "@/components/ui/time-picker";
@@ -30,37 +24,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { getPlatformConfig } from "@/lib/platform";
 
 const POSTS_PER_PAGE = 8;
-
-const platformConfig: Record<
-	string,
-	{ icon: typeof Camera; color: string; label: string }
-> = {
-	instagram: { icon: Camera, color: "bg-pink-500", label: "Instagram" },
-	tiktok: { icon: Video, color: "bg-black", label: "TikTok" },
-	twitter: { icon: MessageCircle, color: "bg-black", label: "X" },
-	linkedin: { icon: Building2, color: "bg-blue-600", label: "LinkedIn" },
-	pinterest: { icon: Layout, color: "bg-red-500", label: "Pinterest" },
-	facebook: { icon: MessageCircle, color: "bg-blue-500", label: "Facebook" },
-};
-
-function getPlatformConfig(platform: string) {
-	return (
-		platformConfig[platform.toLowerCase()] ?? {
-			icon: FileText,
-			color: "bg-muted-foreground",
-			label: platform,
-		}
-	);
-}
 
 export default function PostGallery({
 	posts,
@@ -175,7 +141,7 @@ export default function PostGallery({
 		const pages: React.ReactNode[] = [];
 		const maxVisible = 5;
 		let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-		let end = Math.min(totalPages, start + maxVisible - 1);
+		const end = Math.min(totalPages, start + maxVisible - 1);
 		if (end - start + 1 < maxVisible) {
 			start = Math.max(1, end - maxVisible + 1);
 		}

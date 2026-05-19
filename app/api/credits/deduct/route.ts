@@ -13,9 +13,18 @@ export async function POST(request: NextRequest) {
 		}
 
 		const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-		const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+		const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-		const supabase = createClient(supabaseUrl, supabaseKey);
+		if (!serviceRoleKey) {
+			return NextResponse.json(
+				{ error: "Service role key not configured" },
+				{ status: 500 },
+			);
+		}
+
+		const supabase = createClient(supabaseUrl, serviceRoleKey, {
+			auth: { persistSession: false },
+		});
 
 		const { data: remainingCredits, error } = await supabase.rpc(
 			"deduct_credits",

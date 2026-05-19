@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
 	getProfile,
@@ -26,39 +26,44 @@ export default function SettingsPage() {
 		useState<SubscriptionPlanId | null>(null);
 	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-	const loadProfile = useCallback(async () => {
-		if (!user) return;
-		const p = await getProfile(user.id);
-		setProfile(p);
-		setLoading(false);
-	}, [user]);
-
 	useEffect(() => {
-		loadProfile();
-	}, [loadProfile]);
+		if (!user) return;
+		let cancelled = false;
+		getProfile(user.id).then((p) => {
+			if (cancelled) return;
+			setProfile(p);
+			setLoading(false);
+		});
+		return () => { cancelled = true; };
+	}, [user]);
 
 	useEffect(() => {
 		if (!user) return;
 		const params = new URLSearchParams(window.location.search);
 		if (params.get("success") === "true") {
-			setSuccessMessage("Payment successful! Your credits have been added.");
 			const url = new URL(window.location.pathname, window.location.origin);
 			window.history.replaceState({}, "", url.toString());
+			let cancelled = false;
 			// Wait for webhook to process, then refresh profile data
 			const retry = async () => {
 				for (let i = 0; i < 10; i++) {
 					await new Promise((r) => setTimeout(r, 2000));
+					if (cancelled) return;
 					const p = await getProfile(user.id);
 					if (p && p.plan !== "free") {
 						setProfile(p);
+						setSuccessMessage("Payment successful! Your credits have been added.");
 						return;
 					}
 				}
-				// Final fetch even if plan didn't update
-				const p = await getProfile(user.id);
-				setProfile(p);
+				if (!cancelled) {
+					const p = await getProfile(user.id);
+					setProfile(p);
+					setSuccessMessage("Payment successful! Your credits have been added.");
+				}
 			};
 			retry();
+			return () => { cancelled = true; };
 		}
 	}, [user]);
 
@@ -73,7 +78,7 @@ export default function SettingsPage() {
 			});
 			const data = await res.json();
 			if (data.url) {
-				window.location.href = data.url;
+				window.location.assign(data.url);
 			} else {
 				alert(data.error || "Failed to create checkout session");
 			}

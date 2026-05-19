@@ -12,9 +12,9 @@ import {
 	Loader2,
 	RefreshCw,
 	Check,
-	ArrowRight,
 	ExternalLink,
 	X,
+	ArrowRight,
 } from "lucide-react";
 
 type PlatformId = (typeof PLATFORMS)[number]["id"];
@@ -505,7 +505,9 @@ export default function AccountsPage() {
 													<p className="text-sm font-bold">
 														{account.followers_count.toLocaleString()}
 													</p>
-													<p className="text-xs text-muted-foreground">Followers</p>
+													<p className="text-xs text-muted-foreground">
+														Followers
+													</p>
 												</div>
 											)}
 										</div>
@@ -516,7 +518,9 @@ export default function AccountsPage() {
 													<span className="block font-semibold text-foreground">
 														{platform.name}
 													</span>
-													<span className="text-muted-foreground">Platform</span>
+													<span className="text-muted-foreground">
+														Platform
+													</span>
 												</div>
 												<div className="rounded-lg bg-background px-2 py-1.5">
 													<span className="block font-semibold text-foreground lowercase">
@@ -526,17 +530,22 @@ export default function AccountsPage() {
 																? `@${account.account_name.toLowerCase().replace(/\s+/g, "_")}`
 																: "—"}
 													</span>
-													<span className="text-muted-foreground">Username</span>
+													<span className="text-muted-foreground">
+														Username
+													</span>
 												</div>
 											</div>
-											{(account.followers_count != null || account.profile_url) && (
+											{(account.followers_count != null ||
+												account.profile_url) && (
 												<div className="grid grid-cols-2 gap-2 text-center text-xs">
 													{account.followers_count != null && (
 														<div className="rounded-lg bg-background px-2 py-1.5">
 															<span className="block font-semibold text-foreground">
 																{account.followers_count.toLocaleString()}
 															</span>
-															<span className="text-muted-foreground">Followers</span>
+															<span className="text-muted-foreground">
+																Followers
+															</span>
 														</div>
 													)}
 													{account.profile_url && (
@@ -551,7 +560,9 @@ export default function AccountsPage() {
 																	View Profile
 																</a>
 															</span>
-															<span className="text-muted-foreground">Link</span>
+															<span className="text-muted-foreground">
+																Link
+															</span>
 														</div>
 													)}
 												</div>
@@ -570,7 +581,9 @@ export default function AccountsPage() {
 											) : (
 												<Unlink className="h-4 w-4" />
 											)}
-											{isDisconnecting ? "Disconnecting..." : "Disconnect Account"}
+											{isDisconnecting
+												? "Disconnecting..."
+												: "Disconnect Account"}
 										</Button>
 									</div>
 								) : (

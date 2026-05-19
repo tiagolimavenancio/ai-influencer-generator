@@ -10,16 +10,10 @@ import {
 	Zap,
 	Loader2,
 	Upload,
-	X,
 	RefreshCw,
-	Camera,
-	Video,
-	Layout,
-	Target,
 	Rocket,
 	Gift,
 	Sun,
-	Building2,
 	Trees,
 	Home,
 	Palette,
@@ -30,17 +24,19 @@ import {
 	Star,
 	Send,
 	Bookmark,
-	MessageCircle,
 	Heart,
 	Play,
 	Eye,
 	AudioLines,
-	TrendingUp,
-	DollarSign,
 	Calendar as CalendarIcon,
 	Clock,
 	CheckCircle,
-	BarChart3,
+	Camera,
+	Layout,
+	Target,
+	Building2,
+	MessageCircle,
+	X,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -60,34 +56,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { TimePicker } from "@/components/ui/time-picker";
 import { cn } from "@/lib/utils";
-
-const platformOptions = [
-	{
-		id: "instagram",
-		label: "Instagram",
-		icon: Camera,
-		color: "bg-pink-500",
-	},
-	{ id: "tiktok", label: "TikTok", icon: Video, color: "bg-black" },
-	{ id: "twitter", label: "X", icon: X, color: "bg-black" },
-	{ id: "linkedin", label: "LinkedIn", icon: Building2, color: "bg-blue-600" },
-	{ id: "pinterest", label: "Pinterest", icon: ImageIcon, color: "bg-red-500" },
-	{
-		id: "facebook",
-		label: "Facebook",
-		icon: MessageCircle,
-		color: "bg-blue-500",
-	},
-];
+import { platformOptions as sharedPlatformOptions } from "@/lib/platform";
 
 const postFormatOptions = [
 	{ id: "portrait", label: "Portrait", icon: ImageIcon, aspect: "4:5" },
@@ -300,9 +271,6 @@ export default function PostGeneratorPage() {
 	}, [user, authLoading]);
 
 	const selectedModel = models.find((m) => m.id === formData.modelId);
-	const reachEstimate = selectedModel
-		? Math.floor(Math.random() * 50000 + 10000).toLocaleString()
-		: "0";
 
 	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -578,7 +546,7 @@ export default function PostGeneratorPage() {
 									{model.vibe}
 								</p>
 								<p className="mt-1 text-xs font-medium text-primary">
-									~{reachEstimate} reach
+									Model ready
 								</p>
 							</div>
 						</div>
@@ -606,7 +574,7 @@ export default function PostGeneratorPage() {
 	);
 
 	const renderPlatformTabs = () => {
-		const availablePlatforms = platformOptions.filter((p) =>
+		const availablePlatforms = sharedPlatformOptions.filter((p) =>
 			connectedPlatforms.includes(p.id),
 		);
 
@@ -1351,48 +1319,6 @@ export default function PostGeneratorPage() {
 							</div>
 						)}
 
-						{generatedImage && (
-							<div className="rounded-xl border border-border bg-card p-5">
-								<div className="mb-4 flex items-center gap-2">
-									<BarChart3 className="h-5 w-5 text-primary" />
-									<h4 className="text-base font-semibold">
-										Estimated Performance
-									</h4>
-								</div>
-								<div className="grid grid-cols-3 gap-4">
-									<div className="rounded-lg bg-muted/50 p-3 text-center">
-										<div className="mb-1 flex justify-center">
-											<Heart className="h-4 w-4 text-pink-500" />
-										</div>
-										<p className="text-lg font-bold">
-											{Math.floor(Math.random() * 5000 + 1000).toLocaleString()}
-										</p>
-										<p className="text-xs text-muted-foreground">Engagement</p>
-									</div>
-									<div className="rounded-lg bg-muted/50 p-3 text-center">
-										<div className="mb-1 flex justify-center">
-											<Eye className="h-4 w-4 text-blue-500" />
-										</div>
-										<p className="text-lg font-bold">
-											{Math.floor(
-												Math.random() * 50000 + 10000,
-											).toLocaleString()}
-										</p>
-										<p className="text-xs text-muted-foreground">Impressions</p>
-									</div>
-									<div className="rounded-lg bg-muted/50 p-3 text-center">
-										<div className="mb-1 flex justify-center">
-											<DollarSign className="h-4 w-4 text-green-500" />
-										</div>
-										<p className="text-lg font-bold">
-											${Math.floor(Math.random() * 500 + 50)}
-										</p>
-										<p className="text-xs text-muted-foreground">Ad Value</p>
-									</div>
-								</div>
-							</div>
-						)}
-
 						{credits < 20 && (
 							<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
 								<div className="flex items-center gap-3">
@@ -1487,7 +1413,10 @@ export default function PostGeneratorPage() {
 											<Clock className="h-4 w-4" />
 											Select Time
 										</label>
-										<TimePicker value={scheduleTime} onChange={setScheduleTime} />
+										<TimePicker
+											value={scheduleTime}
+											onChange={setScheduleTime}
+										/>
 									</div>
 								</div>
 							)}

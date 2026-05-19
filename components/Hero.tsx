@@ -1,37 +1,6 @@
-'use client'
-
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 
 export default function Hero() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!isLoading && user) {
-      router.prefetch('/dashboard')
-    }
-  }, [user, isLoading, router])
-
-  const handleStartClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!isLoading && user) {
-      e.preventDefault()
-      router.push('/dashboard')
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <section className="relative overflow-hidden px-6 py-24 sm:py-32">
-        <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
-          <div className="h-12 w-12 animate-pulse rounded-full bg-muted" />
-        </div>
-      </section>
-    )
-  }
-
   return (
     <section className="relative overflow-hidden px-6 py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-primary)_0%,_transparent_50%)] opacity-15" />
@@ -56,11 +25,10 @@ export default function Hero() {
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
           <Link
-            href={user ? '/dashboard' : '/auth/sign-in'}
-            onClick={user ? handleStartClick : undefined}
+            href="/auth/sign-in"
             className="rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
-            {user ? 'Go to Dashboard' : 'Start Creating Free'}
+            Start Creating Free
           </Link>
           <a
             href="#features"

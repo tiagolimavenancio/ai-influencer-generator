@@ -64,9 +64,8 @@ export async function POST(request: NextRequest) {
       let periodEnd: string;
       if (subscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        periodEnd = new Date(
-          (subscription as any).current_period_end * 1000,
-        ).toISOString();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        periodEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
       } else {
         periodEnd = new Date(
           Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -107,6 +106,7 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "invoice.paid") {
       const invoice = event.data.object as Stripe.Invoice;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const subscriptionId = (invoice as any).subscription as string | null;
 
       if (!subscriptionId) {
@@ -121,9 +121,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      const periodEnd = new Date(
-        (subscription as any).current_period_end * 1000,
-      ).toISOString();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const periodEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
 
       await supabase
         .from("profiles")

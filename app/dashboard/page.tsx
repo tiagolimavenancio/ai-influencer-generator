@@ -11,42 +11,22 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import PostGallery from "@/components/dashboard/PostGallery";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+
 	let models: import("@/types/database").Model[] = [];
 	let posts: import("@/types/database").Post[] = [];
-	try {
-		const { createServerClient } = await import("@supabase/ssr");
-		const { cookies } = await import("next/headers");
-		const cookieStore = await cookies();
-		const supabase = createServerClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-			{
-				cookies: {
-					getAll() {
-						return cookieStore.getAll();
-					},
-					setAll(cookiesToSet) {
-						try {
-							cookiesToSet.forEach(({ name, value, options }) =>
-								cookieStore.set(name, value, options),
-							);
-						} catch {}
-					},
-				},
-			},
-		);
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		if (user) {
-			const { getModels: fetchModels, getPosts: fetchPosts } =
-				await import("@/lib/db");
-			models = await fetchModels(user.id);
-			posts = await fetchPosts(user.id);
-		}
-	} catch {}
+	if (user) {
+		const [modelsResult, postsResult] = await Promise.all([
+			supabase.from("models").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+			supabase.from("posts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+		]);
+		models = modelsResult.data || [];
+		posts = postsResult.data || [];
+	}
 
 	return (
 		<div className="p-8">
@@ -154,15 +134,15 @@ export default async function DashboardPage() {
 							</div>
 						</Link>
 						<Link
-							href="/dashboard/studio"
+							href="/dashboard/post-generator"
 							className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted"
 						>
 							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
 								<Sparkles className="h-5 w-5 text-primary" />
 							</div>
 							<div>
-								<p className="font-medium">Open Studio</p>
-								<p className="text-sm text-muted-foreground">Create content</p>
+								<p className="font-medium">Create Post</p>
+								<p className="text-sm text-muted-foreground">Generate content</p>
 							</div>
 						</Link>
 						<Link

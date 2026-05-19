@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import {
+import type {
 	Model,
 	Post,
 	Profile,
@@ -17,24 +17,19 @@ export type {
 	SocialAccount,
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-	console.error("Missing Supabase configuration:", {
-		supabaseUrl,
-		supabaseAnonKey,
-	});
+function getClient() {
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+	if (!supabaseUrl || !supabaseAnonKey) {
+		throw new Error(
+			"Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set",
+		);
+	}
+	return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
-export const supabase =
-	supabaseUrl && supabaseAnonKey
-		? createBrowserClient(supabaseUrl, supabaseAnonKey)
-		: (null as any);
-
-// Profile operations
 export async function getProfile(userId: string): Promise<Profile | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("profiles")
 		.select("*")
 		.eq("id", userId)
@@ -51,7 +46,7 @@ export async function updateCredits(
 	userId: string,
 	credits: number,
 ): Promise<Profile | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("profiles")
 		.update({ credits, updated_at: new Date().toISOString() })
 		.eq("id", userId)
@@ -65,9 +60,8 @@ export async function updateCredits(
 	return data;
 }
 
-// Model operations
 export async function getModels(userId: string): Promise<Model[]> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("models")
 		.select("*")
 		.eq("user_id", userId)
@@ -81,7 +75,7 @@ export async function getModels(userId: string): Promise<Model[]> {
 }
 
 export async function getModel(modelId: string): Promise<Model | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("models")
 		.select("*")
 		.eq("id", modelId)
@@ -101,7 +95,7 @@ export async function createModel(
 	fullBodyUrl: string,
 	prompt: string,
 ): Promise<Model | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("models")
 		.insert({
 			user_id: userId,
@@ -135,8 +129,7 @@ export async function createModel(
 }
 
 export async function deleteModel(modelId: string): Promise<boolean> {
-	const { error } = await supabase.from("models").delete().eq("id", modelId);
-
+	const { error } = await getClient().from("models").delete().eq("id", modelId);
 	if (error) {
 		console.error("Error deleting model:", error);
 		return false;
@@ -144,9 +137,8 @@ export async function deleteModel(modelId: string): Promise<boolean> {
 	return true;
 }
 
-// Post operations
 export async function getPosts(userId: string): Promise<Post[]> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("posts")
 		.select("*")
 		.eq("user_id", userId)
@@ -160,7 +152,7 @@ export async function getPosts(userId: string): Promise<Post[]> {
 }
 
 export async function getPost(postId: string): Promise<Post | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("posts")
 		.select("*")
 		.eq("id", postId)
@@ -184,7 +176,7 @@ export async function createPost(
 ): Promise<Post | null> {
 	const postStatus = status || (scheduledAt ? "scheduled" : "draft");
 
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("posts")
 		.insert({
 			user_id: userId,
@@ -194,10 +186,12 @@ export async function createPost(
 			platform,
 			status: postStatus,
 			scheduled_at: scheduledAt || null,
-		credits_spent: 20,
+			credits_spent: 20,
 		})
+		.select()
+		.single();
 
-		if (error) {
+	if (error) {
 		console.error("Error creating post:", error);
 		return null;
 	}
@@ -208,7 +202,7 @@ export async function updatePost(
 	postId: string,
 	updates: Partial<Post>,
 ): Promise<Post | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("posts")
 		.update(updates)
 		.eq("id", postId)
@@ -223,8 +217,7 @@ export async function updatePost(
 }
 
 export async function deletePost(postId: string): Promise<boolean> {
-	const { error } = await supabase.from("posts").delete().eq("id", postId);
-
+	const { error } = await getClient().from("posts").delete().eq("id", postId);
 	if (error) {
 		console.error("Error deleting post:", error);
 		return false;
@@ -232,11 +225,10 @@ export async function deletePost(postId: string): Promise<boolean> {
 	return true;
 }
 
-// Credit transaction operations
 export async function getCreditTransactions(
 	userId: string,
 ): Promise<CreditTransaction[]> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("credit_transactions")
 		.select("*")
 		.eq("user_id", userId)
@@ -250,12 +242,11 @@ export async function getCreditTransactions(
 	return data || [];
 }
 
-// Helper function to deduct credits via database function
 export async function deductCredits(
 	userId: string,
 	amount: number,
 ): Promise<boolean> {
-	const { data, error } = await supabase.rpc("deduct_credits", {
+	const { data, error } = await getClient().rpc("deduct_credits", {
 		user_uuid: userId,
 		amount,
 	});
@@ -267,7 +258,6 @@ export async function deductCredits(
 	return data !== null;
 }
 
-// Upload model image to Supabase Storage and return the public URL
 export async function uploadModelImage(
 	userId: string,
 	imageUrl: string,
@@ -286,8 +276,8 @@ export async function uploadModelImage(
 		const timestamp = Date.now();
 		const fileName = `${userId}/${type}-${timestamp}.${extension}`;
 
-		const { data, error } = await supabase.storage
-			.from("influencers")
+		const { data, error } = await getClient()
+			.storage.from("influencers")
 			.upload(fileName, buffer, {
 				contentType: `image/${extension === "jpg" ? "jpeg" : extension}`,
 				upsert: false,
@@ -298,8 +288,8 @@ export async function uploadModelImage(
 			return null;
 		}
 
-		const { data: publicUrlData } = supabase.storage
-			.from("influencers")
+		const { data: publicUrlData } = getClient()
+			.storage.from("influencers")
 			.getPublicUrl(data.path);
 
 		return publicUrlData.publicUrl;
@@ -309,11 +299,10 @@ export async function uploadModelImage(
 	}
 }
 
-// Social accounts operations
 export async function getSocialAccounts(
 	userId: string,
 ): Promise<SocialAccount[]> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("social_accounts")
 		.select("*")
 		.eq("user_id", userId)
@@ -329,20 +318,20 @@ export async function getSocialAccounts(
 export async function saveSocialAccount(
 	account: Omit<SocialAccount, "id" | "created_at">,
 ): Promise<SocialAccount | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("social_accounts")
 		.upsert(
 			{
 				user_id: account.user_id,
 				platform: account.platform,
 				zernio_account_id: account.zernio_account_id,
-		account_name: account.account_name,
-		account_image: account.account_image,
-		username: account.username,
-		followers_count: account.followers_count,
-		profile_url: account.profile_url,
-		zernio_data: account.zernio_data,
-	},
+				account_name: account.account_name,
+				account_image: account.account_image,
+				username: account.username,
+				followers_count: account.followers_count,
+				profile_url: account.profile_url,
+				zernio_data: account.zernio_data,
+			},
 			{ onConflict: "user_id, platform" },
 		)
 		.select()
@@ -359,7 +348,7 @@ export async function deleteSocialAccount(
 	userId: string,
 	platform: string,
 ): Promise<boolean> {
-	const { error } = await supabase
+	const { error } = await getClient()
 		.from("social_accounts")
 		.delete()
 		.eq("user_id", userId)
@@ -373,7 +362,7 @@ export async function deleteSocialAccount(
 }
 
 export async function deleteSocialAccountById(id: string): Promise<boolean> {
-	const { error } = await supabase
+	const { error } = await getClient()
 		.from("social_accounts")
 		.delete()
 		.eq("id", id);
@@ -385,7 +374,6 @@ export async function deleteSocialAccountById(id: string): Promise<boolean> {
 	return true;
 }
 
-// Subscription operations
 export async function updateSubscription(
 	userId: string,
 	updates: {
@@ -395,7 +383,7 @@ export async function updateSubscription(
 		subscription_period_end?: string;
 	},
 ): Promise<Profile | null> {
-	const { data, error } = await supabase
+	const { data, error } = await getClient()
 		.from("profiles")
 		.update({ ...updates, updated_at: new Date().toISOString() })
 		.eq("id", userId)
@@ -459,13 +447,12 @@ export const SUBSCRIPTION_PLANS = {
 
 export type SubscriptionPlanId = keyof typeof SUBSCRIPTION_PLANS;
 
-// Helper function to add credits via database function
 export async function addCredits(
 	userId: string,
 	amount: number,
 	description?: string,
 ): Promise<boolean> {
-	const { data, error } = await supabase.rpc("add_credits", {
+	const { data, error } = await getClient().rpc("add_credits", {
 		user_uuid: userId,
 		amount,
 		description: description || "Credit purchase",
