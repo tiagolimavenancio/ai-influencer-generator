@@ -5,6 +5,10 @@ export interface Profile {
 	avatar_url: string | null;
 	credits: number;
 	zernio_profile_id: string | null;
+	stripe_subscription_id: string | null;
+	plan: string;
+	stripe_customer_id: string | null;
+	subscription_period_end: string | null;
 	created_at: string;
 	updated_at: string;
 }

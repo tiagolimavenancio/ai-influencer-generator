@@ -194,12 +194,10 @@ export async function createPost(
 			platform,
 			status: postStatus,
 			scheduled_at: scheduledAt || null,
-			credits_spent: 10,
+		credits_spent: 20,
 		})
-		.select()
-		.single();
 
-	if (error) {
+		if (error) {
 		console.error("Error creating post:", error);
 		return null;
 	}
@@ -386,6 +384,80 @@ export async function deleteSocialAccountById(id: string): Promise<boolean> {
 	}
 	return true;
 }
+
+// Subscription operations
+export async function updateSubscription(
+	userId: string,
+	updates: {
+		stripe_customer_id?: string;
+		stripe_subscription_id?: string;
+		plan?: string;
+		subscription_period_end?: string;
+	},
+): Promise<Profile | null> {
+	const { data, error } = await supabase
+		.from("profiles")
+		.update({ ...updates, updated_at: new Date().toISOString() })
+		.eq("id", userId)
+		.select()
+		.single();
+
+	if (error) {
+		console.error("Error updating subscription:", error);
+		return null;
+	}
+	return data;
+}
+
+export const SUBSCRIPTION_PLANS = {
+	free: {
+		id: "free",
+		name: "Free",
+		price: 0,
+		credits: 300,
+		description: "Best for trying the app",
+		features: {
+			monthlyCredits: "300 credits",
+			aiCreationCost: "50 credits",
+			postCreationCost: "20 credits",
+			connectedAccounts: "1 account",
+			autoPostScheduling: "Up to 5 scheduled posts",
+		},
+		stripePrice: 0,
+	},
+	standard: {
+		id: "standard",
+		name: "Standard",
+		price: 9.99,
+		credits: 2000,
+		description: "Best for creators & small teams",
+		features: {
+			monthlyCredits: "2,000 credits/month",
+			aiCreationCost: "50 credits",
+			postCreationCost: "20 credits",
+			connectedAccounts: "Up to 5 accounts",
+			autoPostScheduling: "Unlimited scheduled posts",
+		},
+		stripePrice: 999,
+	},
+	pro: {
+		id: "pro",
+		name: "Pro",
+		price: 29.99,
+		credits: 10000,
+		description: "Best for power users & agencies",
+		features: {
+			monthlyCredits: "10,000 credits/month",
+			aiCreationCost: "50 credits",
+			postCreationCost: "20 credits",
+			connectedAccounts: "Unlimited accounts",
+			autoPostScheduling: "Unlimited scheduled posts",
+		},
+		stripePrice: 2999,
+	},
+} as const;
+
+export type SubscriptionPlanId = keyof typeof SUBSCRIPTION_PLANS;
 
 // Helper function to add credits via database function
 export async function addCredits(

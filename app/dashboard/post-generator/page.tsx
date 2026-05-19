@@ -400,14 +400,14 @@ export default function PostGeneratorPage() {
 			return;
 		}
 
-		if (credits < 10) {
+		if (credits < 20) {
 			alert("Insufficient credits! Please purchase more credits.");
 			return;
 		}
 
 		setIsGenerating(true);
 
-		const deducted = await deductCredits(user.id, 10);
+		const deducted = await deductCredits(user.id, 20);
 		if (!deducted) {
 			setIsGenerating(false);
 			alert("Insufficient credits. Please purchase more credits.");
@@ -445,10 +445,10 @@ export default function PostGeneratorPage() {
 			}
 
 			setGeneratedImage(imageUrl);
-			setCredits((prev) => prev - 10);
+			setCredits((prev) => prev - 20);
 		} catch (error) {
 			console.error("Generation error:", error);
-			await addCredits(user.id, 10, "Refund for failed post generation");
+			await addCredits(user.id, 20, "Refund for failed post generation");
 			alert("Failed to generate image. Credits have been refunded.");
 		}
 
@@ -1264,7 +1264,7 @@ export default function PostGeneratorPage() {
 
 						<button
 							onClick={handleGenerate}
-							disabled={isGenerating || credits < 10 || !formData.modelId}
+							disabled={isGenerating || credits < 20 || !formData.modelId}
 							className={`w-full rounded-xl bg-primary px-6 py-5 text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 ${
 								isGenerating ? "cursor-wait" : ""
 							}`}
@@ -1280,7 +1280,7 @@ export default function PostGeneratorPage() {
 										<Sparkles className="h-6 w-6" />
 										<span className="text-lg font-bold">Generate Post</span>
 										<div className="rounded-lg bg-white/20 px-2 py-1 text-xs font-bold">
-											-10 ⚡
+											-20 ⚡
 										</div>
 									</>
 								)}
@@ -1393,7 +1393,7 @@ export default function PostGeneratorPage() {
 							</div>
 						)}
 
-						{credits < 10 && (
+						{credits < 20 && (
 							<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
 								<div className="flex items-center gap-3">
 									<div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
